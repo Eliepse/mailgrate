@@ -3,11 +3,16 @@
 namespace App\Commands;
 
 use App\Account;
+use App\Folder;
+use App\Mail;
 use Eliepse\Console\Component\AccountSelection;
 use Eliepse\Imap\Utils;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
 use stdClass;
+use function foo\func;
 
 class UpdateAccountMetadataCommand extends Command
 {
@@ -38,16 +43,15 @@ class UpdateAccountMetadataCommand extends Command
         $accounts = Account::all();
 
         $account = $this->selectAccountWithPassword($accounts);
-        $account->load(['folders.mails']);
         $stream = $account->connect();
 
-        $this->info("Getting mailboxes list...");
+        $this->comment("Fetching mailboxes list...");
 
         // TODO(eliepse): handle root
         $mailboxes = imap_getmailboxes($stream, $account->host, '*');
         imap_close($stream);
 
-        $this->info("Updating mailboxes metadata...");
+        $this->comment("Updating mailboxes metadata...");
 
         /** @var stdClass $mailbox */
         foreach ($mailboxes as $mailbox) {
@@ -67,6 +71,43 @@ class UpdateAccountMetadataCommand extends Command
             ]);
         }
 
+        $this->comment("Fetching mails lists...");
+
+        /** @var Folder $folder */
+        foreach ($account->folders as $folder) {
+            $this->info("Updating: {$folder->name}");
+
+            $stream = $account->connect($folder);
+            $mailsCount = imap_check($stream)->Nmsgs;
+            $mails = $mailsCount > 0 ? collect(imap_fetch_overview($stream, "1:$mailsCount")) : collect();
+            imap_close($stream);
+
+            $mails->transform(function ($mail) {
+                return new Mail([
+                    'subject' => Str::limit(
+                        imap_utf8($mail->subject ?? ''), 250),
+                    'uid' => $mail->uid,
+                ]);
+            });
+
+            $newMails = $mails->diffUsing($folder->mails,
+                function (Mail $imapMail, Mail $dbMail) {
+                    return $imapMail->uid === $dbMail->uid;
+                });
+
+            $deletedMails = $folder->mails->diffUsing($mails,
+                function ($dbMail, $imapMail) {
+                    return $dbMail->uid === $imapMail->uid;
+                });
+
+            $folder->mails()->whereIn('uid', $deletedMails->pluck('id'))->delete();
+            $folder->mails()->saveMany($newMails);
+
+            $this->info("\t{$folder->mails()->count()} mails ({$newMails->count()} added, {$deletedMails->count()} deleted)");
+        }
+
+        // TODO(eliepse): print global stats and timer
+
         $this->info("Update done.");
 
         return;
@@ -74,7 +115,7 @@ class UpdateAccountMetadataCommand extends Command
 
 
     /**
-     * Define the command's schedule.
+     * Define the command's schedule .
      *
      * @param Schedule $schedule
      *
