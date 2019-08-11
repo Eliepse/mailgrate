@@ -53,6 +53,8 @@ class CreateAccountCommand extends Command
         $this->comment("Guessing delimiter...");
 
         $folders = imap_getmailboxes($stream, $account->host, '*');
+        imap_close($stream);
+
         $folder = Arr::first($folders, null, new stdClass());
         $account->delimiter = $folder->delimiter ?? '/';
 
