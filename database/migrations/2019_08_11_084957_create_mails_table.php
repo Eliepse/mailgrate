@@ -15,6 +15,7 @@ class CreateMailsTable extends Migration
     {
         Schema::create('mails', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->unsignedBigInteger('uid');
             $table->string('subject');
             $table->unsignedBigInteger('folder_id');
             $table->timestamps();

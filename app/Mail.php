@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @package App
  * @property-read int id
+ * @property int uid
  * @property string subject
  * @property int folder_id
  * @property-read Carbon created_at
