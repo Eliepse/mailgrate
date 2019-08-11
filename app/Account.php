@@ -31,6 +31,9 @@ final class Account extends Model
     protected $with = ['folders'];
 
     /**
+     * For security purpose, the password
+     * is not stored in the database
+     *
      * @var string|null
      */
     public $password;

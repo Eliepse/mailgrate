@@ -64,6 +64,8 @@ class CreateAccountCommand extends Command
         $account->save();
 
         $this->info("Account saved!");
+
+        return;
     }
 
 
