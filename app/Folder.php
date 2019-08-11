@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read int id
  * @property int account_id
  * @property string name
+ * @property int attributes
  * @property-read Carbon created_at
  * @property-read Carbon updated_at
  * Relations
