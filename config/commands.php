@@ -60,6 +60,10 @@ return [
         Illuminate\Console\Scheduling\ScheduleRunCommand::class,
         Illuminate\Console\Scheduling\ScheduleFinishCommand::class,
         Illuminate\Foundation\Console\VendorPublishCommand::class,
+        \LaravelZero\Framework\Commands\MakeCommand::class,
+        \Illuminate\Database\Console\Migrations\MigrateMakeCommand::class,
+        \LaravelZero\Framework\Commands\BuildCommand::class,
+        \LaravelZero\Framework\Commands\InstallCommand::class,
     ],
 
     /*
@@ -74,7 +78,10 @@ return [
     */
 
     'remove' => [
-        // ..
+        \LaravelZero\Framework\Commands\RenameCommand::class,
+        \Illuminate\Database\Console\Seeds\SeedCommand::class,
+        \Illuminate\Foundation\Console\ModelMakeCommand::class,
+        \Illuminate\Database\Console\Seeds\SeederMakeCommand::class,
     ],
 
 ];
