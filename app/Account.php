@@ -5,6 +5,7 @@ namespace App;
 
 
 use Carbon\Carbon;
+use Eliepse\Imap\Utils;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -63,12 +64,18 @@ final class Account extends Model
     /**
      * Open an imap connection
      *
+     * @param Folder $folder
      * @param int $options
      *
      * @return resource
      */
-    public function connect(int $options = OP_READONLY)
+    public function connect(Folder $folder = null, int $options = OP_READONLY)
     {
-        return imap_open($this->host, $this->username, $this->password, $options);
+        $host = $this->host;
+
+        if ($folder)
+            $host .= Utils::toCustomDelimiter($folder->name, $this->delimiter);
+
+        return imap_open($host, $this->username, $this->password, $options);
     }
 }
