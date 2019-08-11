@@ -58,4 +58,17 @@ final class Account extends Model
             ['password' => $this->password]
         );
     }
+
+
+    /**
+     * Open an imap connection
+     *
+     * @param int $options
+     *
+     * @return resource
+     */
+    public function connect(int $options = OP_READONLY)
+    {
+        return imap_open($this->host, $this->username, $this->password, $options);
+    }
 }
