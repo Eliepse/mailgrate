@@ -7,12 +7,11 @@ use App\Folder;
 use App\Mail;
 use Eliepse\Console\Component\AccountSelection;
 use Eliepse\Imap\Utils;
+use Eliepse\Runtimer;
 use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
 use stdClass;
-use function foo\func;
 
 class UpdateAccountMetadataCommand extends Command
 {
@@ -47,11 +46,16 @@ class UpdateAccountMetadataCommand extends Command
 
         $this->comment("Fetching mailboxes list...");
 
+        $runtimer = new Runtimer(true);
+
         // TODO(eliepse): handle root
         $mailboxes = imap_getmailboxes($stream, $account->host, '*');
         imap_close($stream);
 
+        $this->comment($runtimer);
         $this->comment("Updating mailboxes metadata...");
+
+        $runtimer->reset();
 
         /** @var stdClass $mailbox */
         foreach ($mailboxes as $mailbox) {
@@ -71,6 +75,8 @@ class UpdateAccountMetadataCommand extends Command
             ]);
         }
 
+        $this->comment($runtimer);
+        $runtimer->reset();
         $this->comment("Fetching mails lists...");
 
         /** @var Folder $folder */
@@ -107,6 +113,8 @@ class UpdateAccountMetadataCommand extends Command
         }
 
         // TODO(eliepse): print global stats and timer
+        $runtimer->stop();
+        $this->comment($runtimer);
 
         $this->info("Update done.");
 
