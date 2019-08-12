@@ -74,7 +74,7 @@ final class Account extends Model
         $host = $this->host;
 
         if ($folder)
-            $host .= Utils::toCustomDelimiter($folder->name, $this->delimiter);
+            $host .= utf8_encode(Utils::toCustomDelimiter($folder->name, $this->delimiter));
 
         return imap_open($host, $this->username, $this->password, $options);
     }
