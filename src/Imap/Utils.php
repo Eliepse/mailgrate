@@ -4,6 +4,8 @@
 namespace Eliepse\Imap;
 
 
+use App\Account;
+
 final class Utils
 {
     const IMAP_DELIMITER = '/';
@@ -47,5 +49,24 @@ final class Utils
     public static function imapUtf7ToUtf8(string $string): string
     {
         return mb_convert_encoding($string, 'UTF-8', 'UTF7-IMAP');
+    }
+
+
+    /**
+     * Convert mailbox's name to RFC2683 standart, UTF-8 and remove useless parts
+     *
+     * @param string $name
+     * @param Account $account
+     *
+     * @return string Return the name as an UTF-8 string
+     */
+    public static function cleanMailboxName(string $name, Account $account): string
+    {
+        return substr(
+            self::toRFC2683Delimiter(
+                self::imapUtf7ToUtf8($name),
+                $account->delimiter),
+            strlen($account->host)
+        );
     }
 }
