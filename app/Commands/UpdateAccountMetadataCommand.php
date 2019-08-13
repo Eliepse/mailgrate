@@ -11,7 +11,6 @@ use Eliepse\Runtimer;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
-use stdClass;
 
 class UpdateAccountMetadataCommand extends Command
 {
@@ -112,12 +111,12 @@ class UpdateAccountMetadataCommand extends Command
                 ]);
             });
 
-            // TODO(eliepse): test to optimise by using in_array($uids_array)
+            // TODO(eliepse): try to optimize preparation
+
             $newMails = $imapMails->diffUsing($folder->mails, $this->diffMails());
             $deletedMails = $folder->mails->diffUsing($imapMails, $this->diffMails());
 
             $folder->mails()->whereIn('uid', $deletedMails->pluck('uid'))->delete();
-            // TODO(eliepse): speed up SQL INSERT requests
             $folder->mails()->insert($imapMails->map(function ($mail) use ($folder) {
                 return [
                     'uid' => $mail->uid,
