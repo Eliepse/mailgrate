@@ -118,7 +118,13 @@ class UpdateAccountMetadataCommand extends Command
 
             $folder->mails()->whereIn('uid', $deletedMails->pluck('uid'))->delete();
             // TODO(eliepse): speed up SQL INSERT requests
-            $folder->mails()->saveMany($newMails);
+            $folder->mails()->insert($imapMails->map(function ($mail) use ($folder) {
+                return [
+                    'uid' => $mail->uid,
+                    'subject' => $mail->subject,
+                    'folder_id' => $folder->id,
+                ];
+            })->toArray());
 
             $gNewMails += $newMails->count();
             $gDeletedMails += $deletedMails->count();
