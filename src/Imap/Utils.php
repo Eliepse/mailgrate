@@ -53,6 +53,19 @@ final class Utils
 
 
     /**
+     * Convert an utf-8 string to imap utf-7
+     *
+     * @param string $string
+     *
+     * @return string
+     */
+    public static function imapUtf8ToUtf7(string $string): string
+    {
+        return mb_convert_encoding($string, 'UTF7-IMAP', 'UTF-8');
+    }
+
+
+    /**
      * Convert mailbox's name to RFC2683 standart, UTF-8 and remove useless parts
      *
      * @param string $name
