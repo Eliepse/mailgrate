@@ -44,78 +44,95 @@ class UpdateAccountMetadataCommand extends Command
         $account = $this->selectAccountWithPassword($accounts);
         $stream = $account->connect();
 
+
+        /* * * * * * * * * * * *
+         * Fetch mailbox list  *
+         * * * * * * * * * * * */
+
         $this->comment("Fetching mailboxes list...");
-
-        $runtimer = new Runtimer(true);
-
+        $mainRuntimer = new Runtimer(true);
+        $localRuntimer = new Runtimer(true);
         // TODO(eliepse): handle root
-        $mailboxes = imap_getmailboxes($stream, $account->host, '*');
+        $mailboxes = collect(imap_getmailboxes($stream, $account->host, '*'));
         imap_close($stream);
+        $this->comment($localRuntimer);
 
-        $this->comment($runtimer);
+
+        /* * * * * * * * * * * *
+         * Update folders list *
+         * * * * * * * * * * * */
+
         $this->comment("Updating mailboxes metadata...");
+        $localRuntimer->reset();
 
-        $runtimer->reset();
-
-        /** @var stdClass $mailbox */
-        foreach ($mailboxes as $mailbox) {
-            $name = Utils::imapUtf7ToUtf8($mailbox->name);
-            $name = Utils::toRFC2683Delimiter($name, $account->delimiter);
-            $name = substr($name, strlen($account->host));
-
-            if ($account->folders->firstWhere('name', $name))
-                continue;
-
-            // TODO(eliepse): manage deleted folder (delete them if not present in the list)
-
-            // TODO(eliepse): optimize requests with createMany()
-            $account->folders()->create([
-                'name' => $name,
+        // Map mailboxes into Folder objects
+        $imapFolders = $mailboxes->map(function ($mailbox) use ($account) {
+            return new Folder([
+                'name' => Utils::cleanMailboxName($mailbox->name, $account),
                 'attributes' => $mailbox->attributes,
             ]);
-        }
+        });
 
-        $this->comment($runtimer);
-        $runtimer->reset();
+        $newFolders = $imapFolders->diffUsing($account->folders, $this->diffFolders());
+        $deletedFolders = $account->folders->diffUsing($imapFolders, $this->diffFolders());
+
+        $account->folders()->whereIn('id', $deletedFolders->pluck('id'))->delete();
+        $account->folders()->saveMany($newFolders);
+
+        $account->load(['folders.mails']);
+
+        $this->comment($localRuntimer);
+        $localRuntimer->reset();
+
+
+        /* * * * * * * * * * * *
+         * Update mails lists  *
+         * * * * * * * * * * * */
+
         $this->comment("Fetching mails lists...");
 
+        $gMails = 0;
+        $gNewMails = 0;
+        $gDeletedMails = 0;
+
         /** @var Folder $folder */
-        foreach ($account->folders as $folder) {
-            $this->info("Updating: {$folder->name}");
+        foreach ($account->folders as $key => $folder) {
+            $this->info("Updating(" . ($key + 1) . "/{$account->folders->count()}): {$folder->name}");
 
             $stream = $account->connect($folder);
             $mailsCount = imap_check($stream)->Nmsgs;
-            $mails = $mailsCount > 0 ? collect(imap_fetch_overview($stream, "1:$mailsCount")) : collect();
+            $imapMails = $mailsCount > 0 ? collect(imap_fetch_overview($stream, "1:$mailsCount")) : collect();
             imap_close($stream);
 
-            $mails->transform(function ($mail) {
+            // Map imap mails to Mail objects
+            $imapMails = $imapMails->map(function ($mail) {
                 return new Mail([
                     'subject' => Str::limit(iconv_mime_decode($mail->subject ?? '', ICONV_MIME_DECODE_CONTINUE_ON_ERROR), 200),
                     'uid' => $mail->uid,
                 ]);
             });
 
-            $newMails = $mails->diffUsing($folder->mails,
-                function (Mail $imapMail, Mail $dbMail) {
-                    return $imapMail->uid === $dbMail->uid;
-                });
+            // TODO(eliepse): test to optimise by using in_array($uids_array)
+            $newMails = $imapMails->diffUsing($folder->mails, $this->diffMails());
+            $deletedMails = $folder->mails->diffUsing($imapMails, $this->diffMails());
 
-            $deletedMails = $folder->mails->diffUsing($mails,
-                function ($dbMail, $imapMail) {
-                    return $dbMail->uid === $imapMail->uid;
-                });
-
-            $folder->mails()->whereIn('uid', $deletedMails->pluck('id'))->delete();
+            $folder->mails()->whereIn('uid', $deletedMails->pluck('uid'))->delete();
+            // TODO(eliepse): speed up SQL INSERT requests
             $folder->mails()->saveMany($newMails);
 
-            $this->info("\t{$folder->mails()->count()} mails ({$newMails->count()} added, {$deletedMails->count()} deleted)");
+            $gNewMails += $newMails->count();
+            $gDeletedMails += $deletedMails->count();
+            $gMails += $mailsCount;
+
+            $this->info("\t{$mailsCount} mails ({$newMails->count()} added, {$deletedMails->count()} deleted)");
         }
 
-        // TODO(eliepse): print global stats and timer
-        $runtimer->stop();
-        $this->comment($runtimer);
-
+        $localRuntimer->stop();
+        $this->comment($localRuntimer);
+        $this->info("Total: $gMails (+$gNewMails, -$gDeletedMails).");
+        $this->line("");
         $this->info("Update done.");
+        $this->comment("Executed in $mainRuntimer");
 
         return;
     }
@@ -131,5 +148,27 @@ class UpdateAccountMetadataCommand extends Command
     public function schedule(Schedule $schedule): void
     {
         // $schedule->command(static::class)->everyMinute();
+    }
+
+
+    /**
+     * Compare function for arrays of folders to use with array_udiff
+     */
+    private function diffFolders(): callable
+    {
+        return function (Folder $a, Folder $b): bool {
+            return $a->name === $b->name;
+        };
+    }
+
+
+    /**
+     * Compare function for arrays of mails to use with array_udiff
+     */
+    private function diffMails(): callable
+    {
+        return function (Mail $a, Mail $b): bool {
+            return $a->uid === $b->uid;
+        };
     }
 }
