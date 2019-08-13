@@ -20,7 +20,8 @@
         "illuminate/database": "5.8.*",
         "laravel-zero/framework": "5.8.*",
         "ext-imap" : "*",
-        "ext-mbstring" : "*"
+        "ext-mbstring" : "*",
+        "ext-iconv" : "*"
     },
     "require-dev": {
         "codedungeon/phpunit-result-printer": "^0.26.2",

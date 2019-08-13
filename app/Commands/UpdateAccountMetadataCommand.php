@@ -90,8 +90,7 @@ class UpdateAccountMetadataCommand extends Command
 
             $mails->transform(function ($mail) {
                 return new Mail([
-                    'subject' => Str::limit(
-                        imap_utf8($mail->subject ?? ''), 250),
+                    'subject' => Str::limit(iconv_mime_decode($mail->subject ?? '', ICONV_MIME_DECODE_CONTINUE_ON_ERROR), 200),
                     'uid' => $mail->uid,
                 ]);
             });
