@@ -7,6 +7,7 @@ use App\Folder;
 use App\Mail;
 use Eliepse\Console\Component\AccountSelection;
 use Eliepse\Imap\FetchAccountFolders;
+use Eliepse\Imap\UpdateFolderMailsToDatabase;
 use Eliepse\Imap\UpdateFoldersToDatabase;
 use Eliepse\Imap\Utils;
 use Eliepse\Runtimer;
@@ -64,59 +65,34 @@ class UpdateAccountMetadataCommand extends Command
         (new UpdateFoldersToDatabase)($account, $mailboxes);
         $account->load(['folders.mails']); // We have to load relations because list might have changed
         $this->comment($localRuntimer);
-        $localRuntimer->reset();
 
         /* * * * * * * * * * * *
          * Update mails lists  *
          * * * * * * * * * * * */
 
         $this->comment("Fetching mails lists...");
+        $localRuntimer->reset();
 
-        $gMails = 0;
-        $gNewMails = 0;
+        $gTotalMails = 0;
+        $gAddedMails = 0;
         $gDeletedMails = 0;
 
         /** @var Folder $folder */
         foreach ($account->folders as $key => $folder) {
             $this->info("Updating(" . ($key + 1) . "/{$account->folders->count()}): {$folder->name}");
 
-            $stream = $account->connect($folder);
-            $mailsCount = imap_check($stream)->Nmsgs;
-            $imapMails = $mailsCount > 0 ? collect(imap_fetch_overview($stream, "1:$mailsCount")) : collect();
-            imap_close($stream);
+            $stats = (new UpdateFolderMailsToDatabase)($folder);
 
-            // Map imap mails to Mail objects
-            $imapMails = $imapMails->map(function ($mail) {
-                return new Mail([
-                    'subject' => Str::limit(iconv_mime_decode($mail->subject ?? '', ICONV_MIME_DECODE_CONTINUE_ON_ERROR), 200),
-                    'uid' => $mail->uid,
-                ]);
-            });
+            $gAddedMails += $stats['added'];
+            $gDeletedMails += $stats['deleted'];
+            $gTotalMails += $stats['total'];
 
-            // TODO(eliepse): try to optimize preparation
-
-            $newMails = $imapMails->diffUsing($folder->mails, $this->diffMails());
-            $deletedMails = $folder->mails->diffUsing($imapMails, $this->diffMails());
-
-            $folder->mails()->whereIn('uid', $deletedMails->pluck('uid'))->delete();
-            $folder->mails()->insert($imapMails->map(function ($mail) use ($folder) {
-                return [
-                    'uid' => $mail->uid,
-                    'subject' => $mail->subject,
-                    'folder_id' => $folder->id,
-                ];
-            })->toArray());
-
-            $gNewMails += $newMails->count();
-            $gDeletedMails += $deletedMails->count();
-            $gMails += $mailsCount;
-
-            $this->info("\t{$mailsCount} mails ({$newMails->count()} added, {$deletedMails->count()} deleted)");
+            $this->info("\t{$stats['total']} mails ({$stats['added']} added, {$stats['deleted']} deleted)");
         }
 
         $localRuntimer->stop();
         $this->comment($localRuntimer);
-        $this->info("Total: $gMails (+$gNewMails, -$gDeletedMails).");
+        $this->info("Total: $gTotalMails (+$gAddedMails, -$gDeletedMails).");
         $this->line("");
         $this->info("Update done.");
         $this->comment("Executed in $mainRuntimer");
@@ -135,16 +111,5 @@ class UpdateAccountMetadataCommand extends Command
     public function schedule(Schedule $schedule): void
     {
         // $schedule->command(static::class)->everyMinute();
-    }
-
-
-    /**
-     * Compare function for arrays of mails to use with array_udiff
-     */
-    private function diffMails(): callable
-    {
-        return function (Mail $a, Mail $b): bool {
-            return $a->uid === $b->uid;
-        };
     }
 }
