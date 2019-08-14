@@ -6,6 +6,7 @@ namespace Eliepse\Imap\Actions;
 
 use App\Account;
 use App\Folder;
+use Eliepse\Imap\Utils;
 use Illuminate\Support\Arr;
 
 class UpdateFoldersToDatabaseAction
@@ -18,20 +19,23 @@ class UpdateFoldersToDatabaseAction
      */
     public function __invoke(Account $account, array $imapFolders): array
     {
-        $imapFolders = array_map(function ($mailbox) use ($account) {
+        $folders = array_map(function ($mailbox) use ($account) {
             $f = new Folder([
                 'name' => Utils::cleanMailboxName($mailbox->name, $account),
                 'attributes' => $mailbox->attributes,
             ]);
+
             $f->account()->associate($account);
 
             return $f;
         }, $imapFolders);
 
-        $newFolders = array_udiff($imapFolders, $account->folders->toArray(), $this->diffFolders());
-        $deletedFolders = array_udiff($account->folders->toArray(), $imapFolders, $this->diffFolders());
+        $folders = collect($folders);
 
-        $account->folders()->whereIn('id', Arr::pluck($deletedFolders, 'id'))->delete();
+        $newFolders = $folders->diffUsing($account->folders, $this->diffFolders());
+        $deletedFolders = $account->folders->diffUsing($folders, $this->diffFolders());
+
+        $account->folders()->whereIn('id', $deletedFolders->pluck('id'))->delete();
         $account->folders()->saveMany($newFolders);
 
         return [
@@ -47,7 +51,10 @@ class UpdateFoldersToDatabaseAction
      */
     private function diffFolders(): callable
     {
-        return function (Folder $a, Folder $b): bool {
+        return function ($a, $b): bool {
+            if (is_array($a) || is_array($b))
+                dd($a, $b);
+
             return $a->name === $b->name;
         };
     }
