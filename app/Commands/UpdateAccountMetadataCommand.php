@@ -7,6 +7,7 @@ use App\Folder;
 use App\Mail;
 use Eliepse\Console\Component\AccountSelection;
 use Eliepse\Imap\FetchAccountFolders;
+use Eliepse\Imap\UpdateFoldersToDatabase;
 use Eliepse\Imap\Utils;
 use Eliepse\Runtimer;
 use Illuminate\Console\Scheduling\Schedule;
@@ -60,26 +61,10 @@ class UpdateAccountMetadataCommand extends Command
 
         $this->comment("Updating mailboxes metadata...");
         $localRuntimer->reset();
-
-        // Map mailboxes into Folder objects
-        $imapFolders = $mailboxes->map(function ($mailbox) use ($account) {
-            return new Folder([
-                'name' => Utils::cleanMailboxName($mailbox->name, $account),
-                'attributes' => $mailbox->attributes,
-            ]);
-        });
-
-        $newFolders = $imapFolders->diffUsing($account->folders, $this->diffFolders());
-        $deletedFolders = $account->folders->diffUsing($imapFolders, $this->diffFolders());
-
-        $account->folders()->whereIn('id', $deletedFolders->pluck('id'))->delete();
-        $account->folders()->saveMany($newFolders);
-
-        $account->load(['folders.mails']);
-
+        (new UpdateFoldersToDatabase)($account, $mailboxes);
+        $account->load(['folders.mails']); // We have to load relations because list might have changed
         $this->comment($localRuntimer);
         $localRuntimer->reset();
-
 
         /* * * * * * * * * * * *
          * Update mails lists  *
@@ -150,17 +135,6 @@ class UpdateAccountMetadataCommand extends Command
     public function schedule(Schedule $schedule): void
     {
         // $schedule->command(static::class)->everyMinute();
-    }
-
-
-    /**
-     * Compare function for arrays of folders to use with array_udiff
-     */
-    private function diffFolders(): callable
-    {
-        return function (Folder $a, Folder $b): bool {
-            return $a->name === $b->name;
-        };
     }
 
 
