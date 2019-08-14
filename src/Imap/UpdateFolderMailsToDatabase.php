@@ -6,7 +6,6 @@ namespace Eliepse\Imap;
 
 use App\Folder;
 use App\Mail;
-use Illuminate\Support\Str;
 
 class UpdateFolderMailsToDatabase
 {
@@ -26,8 +25,7 @@ class UpdateFolderMailsToDatabase
         // Map imap mails to Mail objects
         $imapMails = $imapMails->map(function ($mail) {
             return new Mail([
-                // TODO(eliepse): improve this line
-                'subject' => Str::limit(iconv_mime_decode($mail->subject ?? '', ICONV_MIME_DECODE_CONTINUE_ON_ERROR), 200),
+                'subject' => iconv_mime_decode($mail->subject ?? '', ICONV_MIME_DECODE_CONTINUE_ON_ERROR),
                 'uid' => $mail->uid,
             ]);
         });

@@ -4,15 +4,12 @@ namespace App\Commands;
 
 use App\Account;
 use App\Folder;
-use App\Mail;
 use Eliepse\Console\Component\AccountSelection;
 use Eliepse\Imap\FetchAccountFolders;
 use Eliepse\Imap\UpdateFolderMailsToDatabase;
 use Eliepse\Imap\UpdateFoldersToDatabase;
-use Eliepse\Imap\Utils;
 use Eliepse\Runtimer;
 use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
 
 class UpdateAccountMetadataCommand extends Command

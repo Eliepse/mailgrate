@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 /**
  * Class Mail
@@ -50,5 +51,11 @@ final class Mail extends Model
         return $this->transferts()
             ->where('destination_account_id',
                 is_int($account) ? $account : $account->id);
+    }
+
+
+    public function setSubjectAttribute(string $subject)
+    {
+        $this->attributes['subject'] = Str::limit($subject, 200);
     }
 }
