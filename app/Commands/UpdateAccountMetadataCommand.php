@@ -5,9 +5,9 @@ namespace App\Commands;
 use App\Account;
 use App\Folder;
 use Eliepse\Console\Component\AccountSelection;
-use Eliepse\Imap\FetchAccountFolders;
-use Eliepse\Imap\UpdateFolderMailsToDatabase;
-use Eliepse\Imap\UpdateFoldersToDatabase;
+use Eliepse\Imap\Actions\FetchAccountFoldersAction;
+use Eliepse\Imap\Actions\UpdateFolderMailsToDatabaseAction;
+use Eliepse\Imap\Actions\UpdateFoldersToDatabaseAction;
 use Eliepse\Runtimer;
 use Illuminate\Console\Scheduling\Schedule;
 use LaravelZero\Framework\Commands\Command;
@@ -49,7 +49,7 @@ class UpdateAccountMetadataCommand extends Command
 
         $localRuntimer = new Runtimer(true);
         $this->comment("Fetching mailboxes list...");
-        $mailboxes = (new FetchAccountFolders)($account);
+        $mailboxes = (new FetchAccountFoldersAction)($account);
         $this->comment($localRuntimer);
 
 
@@ -59,7 +59,7 @@ class UpdateAccountMetadataCommand extends Command
 
         $this->comment("Updating mailboxes metadata...");
         $localRuntimer->reset();
-        (new UpdateFoldersToDatabase)($account, $mailboxes);
+        (new UpdateFoldersToDatabaseAction)($account, $mailboxes);
         $account->load(['folders.mails']); // We have to load relations because list might have changed
         $this->comment($localRuntimer);
 
@@ -78,7 +78,7 @@ class UpdateAccountMetadataCommand extends Command
         foreach ($account->folders as $key => $folder) {
             $this->info("Updating(" . ($key + 1) . "/{$account->folders->count()}): {$folder->name}");
 
-            $stats = (new UpdateFolderMailsToDatabase)($folder);
+            $stats = (new UpdateFolderMailsToDatabaseAction)($folder);
 
             $gAddedMails += $stats['added'];
             $gDeletedMails += $stats['deleted'];

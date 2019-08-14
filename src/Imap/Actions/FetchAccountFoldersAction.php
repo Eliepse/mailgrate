@@ -1,12 +1,12 @@
 <?php
 
 
-namespace Eliepse\Imap;
+namespace Eliepse\Imap\Actions;
 
 
 use App\Account;
 
-class FetchAccountFolders
+class FetchAccountFoldersAction
 {
     public function __invoke(Account $account): array
     {

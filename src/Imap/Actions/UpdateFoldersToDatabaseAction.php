@@ -1,14 +1,14 @@
 <?php
 
 
-namespace Eliepse\Imap;
+namespace Eliepse\Imap\Actions;
 
 
 use App\Account;
 use App\Folder;
 use Illuminate\Support\Arr;
 
-class UpdateFoldersToDatabase
+class UpdateFoldersToDatabaseAction
 {
     /**
      * @param Account $account

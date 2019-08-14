@@ -1,13 +1,13 @@
 <?php
 
 
-namespace Eliepse\Imap;
+namespace Eliepse\Imap\Actions;
 
 
 use App\Folder;
 use App\Mail;
 
-class UpdateFolderMailsToDatabase
+class UpdateFolderMailsToDatabaseAction
 {
 
     /**
