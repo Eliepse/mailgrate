@@ -6,6 +6,7 @@ use App\Account;
 use App\Folder;
 use App\Mail;
 use Eliepse\Console\Component\AccountSelection;
+use Eliepse\Imap\FetchAccountFolders;
 use Eliepse\Imap\Utils;
 use Eliepse\Runtimer;
 use Illuminate\Console\Scheduling\Schedule;
@@ -39,21 +40,17 @@ class UpdateAccountMetadataCommand extends Command
     public function handle()
     {
         $accounts = Account::all();
-
         $account = $this->selectAccountWithPassword($accounts);
-        $stream = $account->connect();
+        $mainRuntimer = new Runtimer(true);
 
 
         /* * * * * * * * * * * *
          * Fetch mailbox list  *
          * * * * * * * * * * * */
 
-        $this->comment("Fetching mailboxes list...");
-        $mainRuntimer = new Runtimer(true);
         $localRuntimer = new Runtimer(true);
-        // TODO(eliepse): handle root
-        $mailboxes = collect(imap_getmailboxes($stream, $account->host, '*'));
-        imap_close($stream);
+        $this->comment("Fetching mailboxes list...");
+        $mailboxes = (new FetchAccountFolders)($account);
         $this->comment($localRuntimer);
 
 
