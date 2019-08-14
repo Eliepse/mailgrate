@@ -82,4 +82,20 @@ final class Utils
             strlen($account->host)
         );
     }
+
+
+    /**
+     * Convert a subject to utf-8, mime encoded or not
+     *
+     * @param string $subject
+     *
+     * @return string
+     */
+    public static function convertMailSubject(string $subject): string
+    {
+        if (preg_match("/=\?/", $subject))
+            return iconv_mime_decode($subject, ICONV_MIME_DECODE_CONTINUE_ON_ERROR);
+        else
+            return mb_convert_encoding($subject, 'UTF-8');
+    }
 }
