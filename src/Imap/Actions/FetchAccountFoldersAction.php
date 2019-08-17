@@ -11,8 +11,10 @@ class FetchAccountFoldersAction
     public function __invoke(Account $account): array
     {
         $stream = $account->connectWithoutRoot();
-        // TODO(eliepse): handle root
-        $mailboxes = imap_getmailboxes($stream, $account->host, '*');
+        $prepend = $account->root ? $account->root . $account->delimiter : '';
+
+        $mailboxes = imap_getmailboxes($stream, $account->host, $prepend . '*');
+
         imap_close($stream);
 
         return $mailboxes;

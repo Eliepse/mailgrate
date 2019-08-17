@@ -63,6 +63,7 @@ class UpdateAccountMetadataCommand extends Command
         $localRuntimer->reset();
         (new UpdateFoldersToDatabaseAction)($account, $mailboxes);
         $account->load(['folders.mails']); // We have to load relations because list might have changed
+        $this->table(['name'], $account->folders->map(function (Folder $folder) { return [$folder->name]; }));
         $this->comment($localRuntimer);
 
         /* * * * * * * * * * * *
