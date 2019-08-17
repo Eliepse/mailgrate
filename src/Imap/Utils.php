@@ -85,6 +85,24 @@ final class Utils
 
 
     /**
+     * Convert RFC2683 standart, UTF-8 and 'hostless' to a valid imap mailbox name
+     *
+     * @param string $name
+     * @param Account $account
+     *
+     * @return string
+     */
+    public static function uncleanMailboxName(string $name, Account $account): string
+    {
+        return $account->host .
+            self::toCustomDelimiter(
+                self::imapUtf8ToUtf7($name),
+                $account->delimiter
+            );
+    }
+
+
+    /**
      * Convert a subject to utf-8, mime encoded or not
      *
      * @param string $subject
