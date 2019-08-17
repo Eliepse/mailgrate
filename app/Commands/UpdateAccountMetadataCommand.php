@@ -22,7 +22,7 @@ class UpdateAccountMetadataCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'sync:metadata';
+    protected $signature = 'account:update';
 
     /**
      * The description of the command.
