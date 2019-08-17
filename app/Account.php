@@ -73,9 +73,26 @@ final class Account extends Model
     {
         $host = $this->host;
 
-        if ($folder)
-            $host .= Utils::imapUtf8ToUtf7(Utils::toCustomDelimiter($folder->name, $this->delimiter));
+        if ($folder) {
+            $host .= Utils::imapUtf8ToUtf7(
+                Utils::toCustomDelimiter(
+                    $this->root . Utils::IMAP_DELIMITER . $folder->name,
+                    $this->delimiter)
+            );
+        }
 
-        return imap_open($host, $this->username, $this->password, $options);
+        return imap_open($host, $this->username, $this->password, $options, 3);
+    }
+
+
+    public function connectWithoutRoot(Folder $folder = null, int $options = OP_READONLY)
+    {
+        $host = $this->host;
+
+        if ($folder) {
+            $host .= Utils::imapUtf8ToUtf7(Utils::toCustomDelimiter($folder->name, $this->delimiter));
+        }
+
+        return imap_open($host, $this->username, $this->password, $options, 3);
     }
 }

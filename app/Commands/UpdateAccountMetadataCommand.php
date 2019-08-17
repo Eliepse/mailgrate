@@ -9,6 +9,7 @@ use Eliepse\Imap\Actions\FetchAccountFoldersAction;
 use Eliepse\Imap\Actions\UpdateFolderMailsToDatabaseAction;
 use Eliepse\Imap\Actions\UpdateFoldersToDatabaseAction;
 use Eliepse\Runtimer;
+use ErrorException;
 use Illuminate\Console\Scheduling\Schedule;
 use LaravelZero\Framework\Commands\Command;
 
@@ -35,6 +36,7 @@ class UpdateAccountMetadataCommand extends Command
      * Execute the console command.
      *
      * @return mixed
+     * @throws ErrorException
      */
     public function handle()
     {
