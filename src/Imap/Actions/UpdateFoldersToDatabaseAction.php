@@ -7,7 +7,6 @@ namespace Eliepse\Imap\Actions;
 use App\Account;
 use App\Folder;
 use Eliepse\Imap\Utils;
-use Illuminate\Support\Arr;
 
 class UpdateFoldersToDatabaseAction
 {
@@ -15,7 +14,7 @@ class UpdateFoldersToDatabaseAction
      * @param Account $account
      * @param array $imapFolders
      *
-     * @return array Statistics the task (added, deleted, total)
+     * @return array Statistics of the task (added, deleted, total)
      */
     public function __invoke(Account $account, array $imapFolders): array
     {
@@ -32,30 +31,44 @@ class UpdateFoldersToDatabaseAction
 
         $folders = collect($folders);
 
-        $newFolders = $folders->diffUsing($account->folders, $this->diffFolders());
-        $deletedFolders = $account->folders->diffUsing($folders, $this->diffFolders());
+        $foldersToAdd = collect();
+        $foldersToDelete = collect();
 
-        $account->folders()->whereIn('id', $deletedFolders->pluck('id'))->delete();
-        $account->folders()->saveMany($newFolders);
+        foreach ($folders as $imapFolder) {
+            $match = false;
+
+            foreach ($account->folders as $dbFolder) {
+                if ($dbFolder->name === $imapFolder->name) {
+                    $match = true;
+                    break;
+                }
+            }
+
+            if (!$match)
+                $foldersToAdd->push($imapFolder);
+        }
+
+        foreach ($account->folders as $dbFolder) {
+            $match = false;
+
+            foreach ($folders as $imapFolder) {
+                if ($dbFolder->name === $imapFolder->name) {
+                    $match = true;
+                    break;
+                }
+            }
+
+            if (!$match)
+                $foldersToDelete->push($dbFolder);
+        }
+
+        $account->folders()->whereIn('id', $foldersToDelete->pluck('id'))->delete();
+        $account->folders()->saveMany($foldersToAdd);
 
         return [
-            'added' => count($newFolders),
-            'deleted' => count($deletedFolders),
+            'added' => count($foldersToAdd),
+            'deleted' => count($foldersToDelete),
             'total' => count($imapFolders),
         ];
-    }
-
-
-    /**
-     * Compare function for arrays of folders to use with array_udiff
-     */
-    private function diffFolders(): callable
-    {
-        return function ($a, $b): bool {
-            if (is_array($a) || is_array($b))
-                dd($a, $b);
-
-            return $a->name === $b->name;
-        };
     }
 }
