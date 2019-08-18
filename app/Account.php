@@ -73,13 +73,11 @@ final class Account extends Model
     {
         $host = $this->host;
 
-        if ($folder) {
-            $host .= Utils::imapUtf8ToUtf7(
-                Utils::toCustomDelimiter(
-                    $this->root . Utils::IMAP_DELIMITER . $folder->name,
-                    $this->delimiter)
-            );
-        }
+        $host .= Utils::imapUtf8ToUtf7(
+            Utils::toCustomDelimiter(
+                $this->root . Utils::IMAP_DELIMITER . ($folder ? $folder->name : ''),
+                $this->delimiter)
+        );
 
         return imap_open($host, $this->username, $this->password, $options, 3);
     }
