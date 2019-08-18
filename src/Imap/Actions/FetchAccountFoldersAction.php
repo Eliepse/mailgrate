@@ -20,7 +20,7 @@ class FetchAccountFoldersAction
     {
         $stream = $account->connectWithoutRoot();
         $pattern = Utils::toCustomDelimiter(
-            $account->root . Utils::IMAP_DELIMITER . '%',
+            $account->root . Utils::IMAP_DELIMITER . '*',
             $account->delimiter);
 
         $mailboxes = imap_getmailboxes($stream, $account->host, $account->root ? $pattern : '*');
