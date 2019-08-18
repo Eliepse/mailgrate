@@ -23,9 +23,8 @@ class FetchAccountFoldersAction
             $account->root . Utils::IMAP_DELIMITER . '*',
             $account->delimiter);
 
-        // TODO(eliepse): handle existing but empty folders (return empty array)
         // TODO(eliepse): handle non existing folders (throw error)
-        $mailboxes = imap_getmailboxes($stream, $account->host, $account->root ? $pattern : '*');
+        $mailboxes = imap_getmailboxes($stream, $account->host, $account->root ? $pattern : '*') ?: [];
 
         imap_close($stream);
 
