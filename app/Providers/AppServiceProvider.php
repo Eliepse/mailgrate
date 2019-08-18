@@ -2,10 +2,16 @@
 
 namespace App\Providers;
 
+use Eliepse\Imap\AccountPasswordManager;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
+    public $singletons = [
+        AccountPasswordManager::class => AccountPasswordManager::class,
+    ];
+
+
     /**
      * Bootstrap any application services.
      *
@@ -15,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
     {
         //
     }
+
 
     /**
      * Register any application services.

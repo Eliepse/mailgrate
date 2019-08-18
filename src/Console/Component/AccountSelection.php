@@ -5,6 +5,7 @@ namespace Eliepse\Console\Component;
 
 
 use App\Account;
+use Eliepse\Imap\AccountPasswordManager;
 use ErrorException;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -100,6 +101,8 @@ trait AccountSelection
         imap_close($stream);
 
         $this->info("Success!");
+
+        app(AccountPasswordManager::class)->add($account);
 
         return $account->password;
     }

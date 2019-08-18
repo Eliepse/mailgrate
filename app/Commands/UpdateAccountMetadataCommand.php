@@ -61,7 +61,7 @@ class UpdateAccountMetadataCommand extends Command
 
         $this->comment("Updating mailboxes metadata...");
         $localRuntimer->reset();
-        $foldersStats = (new UpdateFoldersToDatabaseAction)($account, $mailboxes);
+        $foldersStats = (new UpdateFoldersToDatabaseAction($account))($mailboxes);
         $account->load(['folders.mails']); // We have to reload relations because list might have changed
         $this->table(['name'], $account->folders->map(function (Folder $folder) { return [$folder->name]; }));
         $this->info("{$foldersStats['total']} folders (+{$foldersStats['added']}, -{$foldersStats['deleted']})");

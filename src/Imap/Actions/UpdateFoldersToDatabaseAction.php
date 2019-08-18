@@ -6,25 +6,38 @@ namespace Eliepse\Imap\Actions;
 
 use App\Account;
 use App\Folder;
+use Eliepse\Imap\AccountPasswordManager;
 use Eliepse\Imap\Utils;
 
 class UpdateFoldersToDatabaseAction
 {
+
     /**
-     * @param Account $account
+     * @var Account
+     */
+    private $account;
+
+
+    public function __construct(Account $account)
+    {
+        $this->account = app(AccountPasswordManager::class)->get($account->id);
+    }
+
+
+    /**
      * @param array $imapFolders
      *
      * @return array Statistics of the task (added, deleted, total)
      */
-    public function __invoke(Account $account, array $imapFolders): array
+    public function __invoke(array $imapFolders): array
     {
-        $folders = array_map(function ($mailbox) use ($account) {
+        $folders = array_map(function ($mailbox) {
             $f = new Folder([
-                'name' => Utils::cleanMailboxName($mailbox->name, $account),
+                'name' => Utils::cleanMailboxName($mailbox->name, $this->account),
                 'attributes' => $mailbox->attributes,
             ]);
 
-            $f->account()->associate($account);
+            $f->account()->associate($this->account);
 
             return $f;
         }, $imapFolders);
@@ -37,7 +50,7 @@ class UpdateFoldersToDatabaseAction
         foreach ($folders as $imapFolder) {
             $match = false;
 
-            foreach ($account->folders as $dbFolder) {
+            foreach ($this->account->folders as $dbFolder) {
                 if ($dbFolder->name === $imapFolder->name) {
                     $match = true;
                     break;
@@ -48,7 +61,7 @@ class UpdateFoldersToDatabaseAction
                 $foldersToAdd->push($imapFolder);
         }
 
-        foreach ($account->folders as $dbFolder) {
+        foreach ($this->account->folders as $dbFolder) {
             $match = false;
 
             foreach ($folders as $imapFolder) {
@@ -62,8 +75,8 @@ class UpdateFoldersToDatabaseAction
                 $foldersToDelete->push($dbFolder);
         }
 
-        $account->folders()->whereIn('id', $foldersToDelete->pluck('id'))->delete();
-        $account->folders()->saveMany($foldersToAdd);
+        $this->account->folders()->whereIn('id', $foldersToDelete->pluck('id'))->delete();
+        $this->account->folders()->saveMany($foldersToAdd);
 
         return [
             'added' => count($foldersToAdd),
