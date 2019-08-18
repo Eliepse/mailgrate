@@ -5,6 +5,7 @@ namespace Eliepse\Console\Component;
 
 
 use App\Account;
+use ErrorException;
 use Illuminate\Database\Eloquent\Collection;
 
 trait AccountSelection
@@ -85,13 +86,16 @@ trait AccountSelection
     protected function askAccountPassword(Account $account): string
     {
         do {
-            if (isset($stream))
-                $this->error("Failed to connect, try again.");
-
             $account->password = $this->secret("Please enter the password");
             $this->comment("Testing the connection...");
 
-        } while (!$stream = imap_open($account->host, $account->username, $account->password));
+            try {
+                $stream = imap_open($account->host, $account->username, $account->password, OP_READONLY | OP_HALFOPEN, 2);
+            } catch (ErrorException $exception) {
+                $this->error("Failed to connect, try again.");
+            }
+
+        } while (!isset($stream));
 
         imap_close($stream);
 
