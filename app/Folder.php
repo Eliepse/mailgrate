@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int account_id
  * @property string name
  * @property string nameWithoutRoot
+ * @property string $fullname
  * @property int attributes
  * @property-read Carbon created_at
  * @property-read Carbon updated_at
@@ -43,6 +44,17 @@ final class Folder extends Model
         } else {
             return str_replace($this->account->root . Utils::IMAP_DELIMITER, '', $this->name);
         }
+    }
+
+
+    /**
+     * Return the name of the folder, with host and root
+     *
+     * @return string
+     */
+    public function getFullnameAttribute(): string
+    {
+        return $this->account->host . $this->nameWithoutRoot;
     }
 
 
