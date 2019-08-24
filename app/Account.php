@@ -79,7 +79,7 @@ final class Account extends Model
                 $this->delimiter)
         );
 
-        return imap_open($host, $this->username, $this->password, $options, 3);
+        return imap_open(Utils::uncleanMailboxName($folder->name, $this), $this->username, $this->password, $options, 3);
     }
 
 
