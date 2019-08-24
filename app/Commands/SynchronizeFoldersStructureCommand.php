@@ -51,10 +51,10 @@ class SynchronizeFoldersStructureCommand extends Command
         $this->comment("Update folder structure in database");
 
         $fromFolders = (new FetchAccountFoldersAction)($accountFrom);
-        (new UpdateFoldersToDatabaseAction)($accountFrom, $fromFolders);
+        (new UpdateFoldersToDatabaseAction($accountFrom))($fromFolders);
 
         $toFolders = (new FetchAccountFoldersAction)($accountTo);
-        (new UpdateFoldersToDatabaseAction)($accountTo, $toFolders);
+        (new UpdateFoldersToDatabaseAction($accountTo))($toFolders);
 
         $accountFrom->load(['folders']);
         $accountTo->load(['folders']);
