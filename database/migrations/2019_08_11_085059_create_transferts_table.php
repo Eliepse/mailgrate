@@ -17,7 +17,7 @@ class CreateTransfertsTable extends Migration
             $table->bigIncrements('id');
             $table->unsignedBigInteger('mail_id');
             $table->unsignedBigInteger('destination_account_id');
-            $table->unsignedBigInteger('status')->default(0);
+            $table->tinyInteger('status')->default(0);
             $table->string('message')->nullable();
             $table->timestamps();
         });
