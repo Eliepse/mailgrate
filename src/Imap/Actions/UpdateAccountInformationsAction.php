@@ -48,10 +48,13 @@ class UpdateAccountInformationsAction extends Action
 
         $this->output->writeln("<comment>Fetch mails list...</comment>");
 
+        $step = 1;
+
         /** @var Folder $folder */
-        foreach ($this->account->folders as $key => $folder) {
-            $this->output->write("\033[2K\r  <comment>$key/{$this->account->folders->count()}: $folder->name</comment>");
+        foreach ($this->account->folders as $folder) {
+            $this->output->write("\033[2K\r  <comment>$step/{$this->account->folders->count()}: $folder->name</comment>");
             (new UpdateFolderMailsToDatabaseAction)($this->account, $folder);
+            $step++;
         }
 
         $this->output->newLine();
