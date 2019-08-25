@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Account;
 use Eliepse\Console\Component\AccountSelection;
+use Eliepse\Imap\Actions\CopyAccountFolderStructureAction;
 use Eliepse\Imap\Actions\UpdateAccountInformationsAction;
 use Eliepse\Runtimer;
 use ErrorException;
@@ -70,10 +71,10 @@ class SynchronizeCommand extends Command
 
         $this->timer->start();
 
-        $this->comment("Updating source account informations...");
+        $this->comment("\nUpdating source account informations...");
         (new UpdateAccountInformationsAction($this->from->id))();
 
-        $this->comment("Updating destination account informations...");
+        $this->comment("Updating destination account informations...\n");
         (new UpdateAccountInformationsAction($this->to->id))();
 
         $this->from->load(['folders.mails']);
@@ -86,6 +87,8 @@ class SynchronizeCommand extends Command
                 [$this->from->mailCount() . ' mails', $this->to->mailCount() . ' mails'],
             ]);
 
+        $this->info("\nCopying folder structure...");
+        (new CopyAccountFolderStructureAction($this->from->id))($this->to->id);
 
         $this->timer->stop();
 
