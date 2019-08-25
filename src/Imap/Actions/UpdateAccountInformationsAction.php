@@ -8,6 +8,7 @@ use App\Account;
 use App\Folder;
 use Eliepse\Runtimer;
 use ErrorException;
+use Illuminate\Console\OutputStyle;
 
 class UpdateAccountInformationsAction extends Action
 {
@@ -24,9 +25,9 @@ class UpdateAccountInformationsAction extends Action
     public $timer;
 
 
-    public function __construct(int $account_id)
+    public function __construct(OutputStyle $output, int $account_id)
     {
-        parent::__construct();
+        parent::__construct($output);
 
         $this->account = $this->getAccountFromId($account_id);
     }

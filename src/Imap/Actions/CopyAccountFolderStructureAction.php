@@ -6,6 +6,7 @@ namespace Eliepse\Imap\Actions;
 
 use App\Account;
 use App\Folder;
+use Illuminate\Console\OutputStyle;
 
 class CopyAccountFolderStructureAction extends Action
 {
@@ -25,11 +26,12 @@ class CopyAccountFolderStructureAction extends Action
     /**
      * CopyAccountFolderStructureAction constructor.
      *
+     * @param OutputStyle $output
      * @param int $source_id Id of the source account
      */
-    public function __construct(int $source_id)
+    public function __construct(OutputStyle $output, int $source_id)
     {
-        parent::__construct();
+        parent::__construct($output);
 
         $this->from = $this->getAccountFromId($source_id);
     }

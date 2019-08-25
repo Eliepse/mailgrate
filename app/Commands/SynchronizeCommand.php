@@ -74,10 +74,10 @@ class SynchronizeCommand extends Command
 
         if (!$this->option('no-update')) {
             $this->comment("\nUpdating source account informations...");
-            (new UpdateAccountInformationsAction($this->from->id))();
+            (new UpdateAccountInformationsAction($this->output, $this->from->id))();
 
             $this->comment("Updating destination account informations...\n");
-            (new UpdateAccountInformationsAction($this->to->id))();
+            (new UpdateAccountInformationsAction($this->output, $this->to->id))();
         } else {
             $this->comment("Skipped accounts update.");
         }
@@ -93,7 +93,7 @@ class SynchronizeCommand extends Command
             ]);
 
         $this->info("\nCopying folder structure...");
-        (new CopyAccountFolderStructureAction($this->from->id))($this->to->id);
+        (new CopyAccountFolderStructureAction($this->output, $this->from->id))($this->to->id);
 
         $this->timer->stop();
 
