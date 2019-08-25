@@ -36,12 +36,19 @@ class CopyAccountMailsAction extends Action
     {
         $this->to = $this->getAccountFromId($destination_id);
 
+        $step = 1;
+
         /** @var Folder $folder */
         foreach ($this->from->folders as $folder) {
+            /** @var Folder|null $destFolder */
             $destFolder = $this->to->folders->firstWhere('nameWithoutRoot', $folder->nameWithoutRoot);
+
+            $step++;
 
             if (!$destFolder)
                 continue;
+
+            $this->output->writeln("{$step}/{$this->from->folders->count()}: " . $destFolder->name);
 
             (new CopyFolderMailsToAccountAction($this->output, $this->from, $this->to))($folder, $destFolder);
         };

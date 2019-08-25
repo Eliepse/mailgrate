@@ -74,15 +74,23 @@ class CopyFolderMailsToAccountAction extends Action
 
         // TODO(eliepse): make clean stats (including skipped)
 
+        if ($mailToProcess->count() === 0) {
+            $this->output->writeln("Skipped");
+            $this->timer->stop();
+
+            return $this->stats;
+        }
+
         $streamFrom = $this->origin->connect($from);
         $streamTo = $this->destin->connect($to);
+
+        $bar = $this->output->createProgressBar($mailToProcess->count());
 
         $this->stats['total'] = $from->mails->count();
         $this->stats['skipped'] = $from->mails->count() - $mailToProcess->count();
 
         /** @var Mail $mail */
-        foreach ($mailToProcess as $key => $mail) {
-            $this->output->comment("Processing $key/{$mailToProcess->count()}");
+        foreach ($mailToProcess as $mail) {
 
             // Download the email
             $body = imap_body($streamFrom, $mail->uid, FT_UID | FT_PEEK);
@@ -104,7 +112,12 @@ class CopyFolderMailsToAccountAction extends Action
             }
 
             $transfert->save();
+
+            $bar->advance();
         }
+
+        $bar->finish();
+        $this->output->newLine();
 
         imap_close($streamFrom);
         imap_close($streamTo);
