@@ -8,13 +8,14 @@ use App\Account;
 use App\Folder;
 use App\Mail;
 use App\Transfert;
-use Eliepse\Imap\AccountPasswordManager;
 use Eliepse\Imap\Utils;
-use Illuminate\Console\Command;
+use Illuminate\Console\OutputStyle;
 use Illuminate\Database\Eloquent\Collection;
 
-class CopyFolderMailsToAccountAction
+class CopyFolderMailsToAccountAction extends Action
 {
+    use AccountManagement;
+
     /**
      * @var Account
      */
@@ -31,12 +32,12 @@ class CopyFolderMailsToAccountAction
     public $stats = [];
 
 
-    public function __construct(Account $origin, Account $destination)
+    public function __construct(OutputStyle $output, Account $origin, Account $destination)
     {
-        /** @var AccountPasswordManager $manager */
-        $manager = app(AccountPasswordManager::class);
-        $this->origin = $manager->get($origin->id);
-        $this->destin = $manager->get($destination->id);
+        parent::__construct($output);
+
+        $this->origin = $this->getAccountFromModel($origin);
+        $this->destin = $this->getAccountFromModel($destination);
         $this->stats = [
             'success' => 0,
             'skipped' => 0,
@@ -45,8 +46,10 @@ class CopyFolderMailsToAccountAction
     }
 
 
-    public function __invoke(Folder $from, Folder $to, Command $command)
+    public function __invoke(Folder $from, Folder $to)
     {
+        $this->timer->start();
+
         /** @var Collection $transferts */
 //        $transferts = Transfert::query()
 //            ->with(['mail'])
@@ -79,7 +82,7 @@ class CopyFolderMailsToAccountAction
 
         /** @var Mail $mail */
         foreach ($mailToProcess as $key => $mail) {
-            $command->comment("Processing $key/{$mailToProcess->count()}");
+            $this->output->comment("Processing $key/{$mailToProcess->count()}");
 
             // Download the email
             $body = imap_body($streamFrom, $mail->uid, FT_UID | FT_PEEK);
@@ -105,6 +108,8 @@ class CopyFolderMailsToAccountAction
 
         imap_close($streamFrom);
         imap_close($streamTo);
+
+        $this->timer->stop();
 
         return $this->stats;
     }
