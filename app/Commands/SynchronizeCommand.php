@@ -20,7 +20,8 @@ class SynchronizeCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'sync';
+    protected $signature = 'sync 
+                            {--no-update : only use database informations (include folders and mails)}';
 
     /**
      * The description of the command.
@@ -71,11 +72,15 @@ class SynchronizeCommand extends Command
 
         $this->timer->start();
 
-        $this->comment("\nUpdating source account informations...");
-        (new UpdateAccountInformationsAction($this->from->id))();
+        if (!$this->option('no-update')) {
+            $this->comment("\nUpdating source account informations...");
+            (new UpdateAccountInformationsAction($this->from->id))();
 
-        $this->comment("Updating destination account informations...\n");
-        (new UpdateAccountInformationsAction($this->to->id))();
+            $this->comment("Updating destination account informations...\n");
+            (new UpdateAccountInformationsAction($this->to->id))();
+        } else {
+            $this->comment("Skipped accounts update.");
+        }
 
         $this->from->load(['folders.mails']);
         $this->to->load(['folders.mails']);
