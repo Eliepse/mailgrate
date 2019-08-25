@@ -9,7 +9,7 @@ use App\Folder;
 use Eliepse\Runtimer;
 use ErrorException;
 
-class UpdateAccountInformationsAction
+class UpdateAccountInformationsAction extends Action
 {
     use AccountManagement;
 
@@ -23,15 +23,11 @@ class UpdateAccountInformationsAction
      */
     public $timer;
 
-    /**
-     * @var callable
-     */
-    public $callback;
-
 
     public function __construct(int $account_id)
     {
-        $this->timer = new Runtimer();
+        parent::__construct();
+
         $this->account = $this->getAccountFromId($account_id);
     }
 
