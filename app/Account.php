@@ -52,6 +52,12 @@ final class Account extends Model
     }
 
 
+    public function mailCount(): int
+    {
+        return $this->folders->reduce(function ($acc, Folder $folder) { return $acc + $folder->mails->count(); }, 0);
+    }
+
+
     public function toArray()
     {
         return array_merge(
