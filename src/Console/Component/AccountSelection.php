@@ -99,6 +99,7 @@ trait AccountSelection
         } while (!isset($stream));
 
         imap_close($stream);
+        imap_flush_errors();
 
         $this->info("Success!");
 
