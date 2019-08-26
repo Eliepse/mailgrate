@@ -82,7 +82,7 @@ class UpdateAccountMetadataCommand extends Command
         foreach ($account->folders as $key => $folder) {
             $this->info("Updating(" . ($key + 1) . "/{$account->folders->count()}): {$folder->name}");
 
-            $stats = (new UpdateFolderMailsToDatabaseAction)($account, $folder);
+            $stats = (new UpdateFolderMailsToDatabaseAction($this->output))($account, $folder);
 
             $gAddedMails += $stats['added'];
             $gDeletedMails += $stats['deleted'];
