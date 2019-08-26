@@ -9,6 +9,7 @@ use App\Folder;
 use App\Mail;
 use App\Transfert;
 use Eliepse\Imap\Utils;
+use ErrorException;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
@@ -93,17 +94,21 @@ class CopyFolderMailsToAccountAction extends Action
         /** @var Mail $mail */
         foreach ($mailToProcess as $mail) {
 
-            try {
-                // Download the email
-                $body = imap_body($streamFrom, $mail->uid, FT_UID | FT_PEEK);
-            } catch (\ErrorException $e) {
-                Log::error($e->getMessage(), ['mail' => $mail->toArray()]);
-            }
-
             $transfert = $mail->transferts->firstWhere('destination_account_id', $this->destin->id) ?? new Transfert();
-
             $transfert->mail()->associate($mail);
             $transfert->destination()->associate($this->destin);
+
+            // Download the email
+            try {
+                $body = imap_body($streamFrom, $mail->uid, FT_UID | FT_PEEK);
+            } catch (ErrorException $e) {
+                Log::error($e->getMessage(), ['mail' => $mail->toArray()]);
+                $this->stats['failed']++;
+                $transfert->status = Transfert::STATUS_FAILED;
+                $transfert->message = imap_last_error();
+                $transfert->save();
+                continue;
+            }
 
             // Upload the email
             if (imap_append($streamTo, Utils::uncleanMailboxName($to->name, $to->account), $body)) {
