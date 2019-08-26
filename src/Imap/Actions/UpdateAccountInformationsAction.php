@@ -34,9 +34,11 @@ class UpdateAccountInformationsAction extends Action
 
 
     /**
+     * @param bool $update_mails Update mail list or not
+     *
      * @throws ErrorException
      */
-    public function __invoke()
+    public function __invoke(bool $update_mails = true)
     {
         $this->timer->start();
 
@@ -51,6 +53,12 @@ class UpdateAccountInformationsAction extends Action
         $step = 1;
 
         $updateFolderAction = new UpdateFolderMailsToDatabaseAction($this->output);
+
+        if ($update_mails) {
+            $this->timer->stop();
+
+            return;
+        }
 
         /** @var Folder $folder */
         foreach ($this->account->folders as $folder) {

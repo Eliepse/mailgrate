@@ -77,9 +77,8 @@ class SynchronizeCommand extends Command
             $this->comment("\nUpdating source account informations...");
             (new UpdateAccountInformationsAction($this->output, $this->from->id))();
 
-            // TODO(eliepse): use a softer option (don't need mails update, only folders)
             $this->comment("Updating destination account informations...\n");
-            (new UpdateAccountInformationsAction($this->output, $this->to->id))();
+            (new UpdateAccountInformationsAction($this->output, $this->to->id))(false);
         } else {
             $this->comment("Skipped accounts update.");
         }
@@ -91,7 +90,7 @@ class SynchronizeCommand extends Command
             ['Source account', 'Destination account'],
             [
                 [$this->from->folders->count() . ' folders', $this->to->folders->count() . ' folders'],
-                [$this->from->mailCount() . ' mails', $this->to->mailCount() . ' mails'],
+                [$this->from->mailCount() . ' mails', '-'],
             ]);
 
         $this->info("\nCopying folder structure...");
