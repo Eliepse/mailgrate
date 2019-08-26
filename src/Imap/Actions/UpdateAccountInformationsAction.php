@@ -54,7 +54,7 @@ class UpdateAccountInformationsAction extends Action
 
         $updateFolderAction = new UpdateFolderMailsToDatabaseAction($this->output);
 
-        if ($update_mails) {
+        if (!$update_mails) {
             $this->timer->stop();
 
             return;
