@@ -50,10 +50,12 @@ class UpdateAccountInformationsAction extends Action
 
         $step = 1;
 
+        $updateFolderAction = new UpdateFolderMailsToDatabaseAction($this->output);
+
         /** @var Folder $folder */
         foreach ($this->account->folders as $folder) {
             $this->output->write("\033[2K\r  <comment>$step/{$this->account->folders->count()}: $folder->name</comment>");
-            (new UpdateFolderMailsToDatabaseAction)($this->account, $folder);
+            $updateFolderAction($this->account, $folder);
             $step++;
         }
 

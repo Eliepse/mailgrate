@@ -9,9 +9,27 @@ use App\Folder;
 use App\Mail;
 use Eliepse\Imap\Utils;
 use ErrorException;
+use Illuminate\Console\OutputStyle;
 
-class UpdateFolderMailsToDatabaseAction
+class UpdateFolderMailsToDatabaseAction extends Action
 {
+    /**
+     * @var
+     */
+    public $stats;
+
+
+    public function __construct(OutputStyle $output)
+    {
+        parent::__construct($output);
+
+        $this->stats = [
+            'added' => 0,
+            'deleted' => 0,
+            'total' => 0,
+        ];
+    }
+
 
     /**
      * @param Account $account
@@ -30,6 +48,8 @@ class UpdateFolderMailsToDatabaseAction
         $imapMails = $totalMails > 0 ? collect(imap_fetch_overview($stream, "1:$totalMails")) : collect();
         imap_close($stream);
 
+        $this->stats['total'] = $imapMails->count();
+
         // Map imap mails to Mail objects
         $imapMails = $imapMails->map(function ($mail) use ($folder) {
             $m = new Mail([
@@ -47,16 +67,15 @@ class UpdateFolderMailsToDatabaseAction
         $newMails = $imapMails->diffUsing($folder->mails, $this->diffMails());
         $deletedMails = $folder->mails->diffUsing($imapMails, $this->diffMails());
 
+        $this->stats['added'] = $newMails->count();
+        $this->stats['deleted'] = $deletedMails->count();
+
         $folder->mails()->whereIn('uid', $deletedMails->pluck('uid'))->delete();
         $folder->mails()->insert($newMails->map(function (Mail $mail) use ($folder) {
             return $mail->attributesToArray();
         })->toArray());
 
-        return [
-            'added' => $newMails->count(),
-            'deleted' => $deletedMails->count(),
-            'total' => $imapMails->count(),
-        ];
+        return $this->stats;
     }
 
 
