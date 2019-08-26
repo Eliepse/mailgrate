@@ -7,6 +7,7 @@ namespace Eliepse\Imap\Actions;
 use App\Account;
 use App\Folder;
 use Illuminate\Console\OutputStyle;
+use Illuminate\Support\Facades\Log;
 
 class CopyAccountMailsAction extends Action
 {
@@ -50,7 +51,11 @@ class CopyAccountMailsAction extends Action
 
             $this->output->writeln("{$step}/{$this->from->folders->count()}: " . $destFolder->name);
 
-            (new CopyFolderMailsToAccountAction($this->output, $this->from, $this->to))($folder, $destFolder);
+            $action = new CopyFolderMailsToAccountAction($this->output, $this->from, $this->to);
+
+            $action($folder, $destFolder);
+
+            Log::info("Copied mails from $folder->name.", $action->stats);
         };
     }
 }

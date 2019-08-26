@@ -11,6 +11,7 @@ use App\Transfert;
 use Eliepse\Imap\Utils;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
 
 class CopyFolderMailsToAccountAction extends Action
 {
@@ -74,6 +75,9 @@ class CopyFolderMailsToAccountAction extends Action
 
         // TODO(eliepse): make clean stats (including skipped)
 
+        $this->stats['total'] = $from->mails->count();
+        $this->stats['skipped'] = $from->mails->count() - $mailToProcess->count();
+
         if ($mailToProcess->count() === 0) {
             $this->output->writeln("Skipped");
             $this->timer->stop();
@@ -86,14 +90,15 @@ class CopyFolderMailsToAccountAction extends Action
 
         $bar = $this->output->createProgressBar($mailToProcess->count());
 
-        $this->stats['total'] = $from->mails->count();
-        $this->stats['skipped'] = $from->mails->count() - $mailToProcess->count();
-
         /** @var Mail $mail */
         foreach ($mailToProcess as $mail) {
 
-            // Download the email
-            $body = imap_body($streamFrom, $mail->uid, FT_UID | FT_PEEK);
+            try {
+                // Download the email
+                $body = imap_body($streamFrom, $mail->uid, FT_UID | FT_PEEK);
+            } catch (\ErrorException $e) {
+                Log::error($e->getMessage(), ['mail' => $mail->toArray()]);
+            }
 
             $transfert = $mail->transferts->firstWhere('destination_account_id', $this->destin->id) ?? new Transfert();
 
