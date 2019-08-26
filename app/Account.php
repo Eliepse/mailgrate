@@ -29,7 +29,6 @@ final class Account extends Model
 {
     protected $table = 'accounts';
     protected $guarded = [];
-    protected $with = ['folders'];
 
     /**
      * For security purpose, the password

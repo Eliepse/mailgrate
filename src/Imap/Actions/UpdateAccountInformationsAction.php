@@ -44,7 +44,7 @@ class UpdateAccountInformationsAction extends Action
 
         $mailboxes = (new FetchAccountFoldersAction)($this->account);
         (new UpdateFoldersToDatabaseAction($this->account))($mailboxes);
-        $this->account->load(['folders.mails']);
+        $this->account->load(['folders']);
 
         $this->output->writeln("<comment>Fetch mails list...</comment>");
 

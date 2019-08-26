@@ -31,7 +31,6 @@ final class Folder extends Model
 {
     protected $table = 'folders';
     protected $guarded = ['account_id'];
-    protected $with = ['mails'];
 
 
     /**

@@ -77,6 +77,7 @@ class SynchronizeCommand extends Command
             $this->comment("\nUpdating source account informations...");
             (new UpdateAccountInformationsAction($this->output, $this->from->id))();
 
+            // TODO(eliepse): use a softer option (don't need mails update, only folders)
             $this->comment("Updating destination account informations...\n");
             (new UpdateAccountInformationsAction($this->output, $this->to->id))();
         } else {
@@ -84,7 +85,7 @@ class SynchronizeCommand extends Command
         }
 
         $this->from->load(['folders.mails']);
-        $this->to->load(['folders.mails']);
+        $this->to->load(['folders']);
 
         $this->table(
             ['Source account', 'Destination account'],
