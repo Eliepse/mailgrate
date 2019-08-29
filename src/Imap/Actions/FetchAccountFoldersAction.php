@@ -7,6 +7,7 @@ namespace Eliepse\Imap\Actions;
 use App\Account;
 use Eliepse\Imap\Utils;
 use ErrorException;
+use stdClass;
 
 class FetchAccountFoldersAction
 {
@@ -27,6 +28,14 @@ class FetchAccountFoldersAction
         $mailboxes = imap_getmailboxes($stream, $account->host, $account->root ? $pattern : '*') ?: [];
 
         imap_close($stream);
+
+        if (!empty($account->root)) {
+            $mailboxe = new stdClass();
+            $mailboxe->name = $account->host . $account->root;
+            $mailboxe->attributes = 64;
+            $mailboxe->delimiter = $account->delimiter;
+            $mailboxes[] = $mailboxe;
+        }
 
         if (!is_array($mailboxes))
             throw new ErrorException("Error on fetching mailboxes list.");
