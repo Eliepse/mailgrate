@@ -116,6 +116,7 @@ class CopyFolderMailsToAccountAction extends Action
                 $transfert->status = Transfert::STATUS_SUCCESS;
                 $transfert->message = '';
             } else {
+                Log::error($e->getMessage(), ['mail' => $mail->toArray()]);
                 $this->stats['failed']++;
                 $transfert->status = Transfert::STATUS_FAILED;
                 $transfert->message = imap_last_error();
