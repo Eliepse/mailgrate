@@ -37,7 +37,7 @@ class CopyAccountMailsAction extends Action
     {
         $this->to = $this->getAccountFromId($destination_id);
 
-        $step = 1;
+        $step = 0;
 
         /** @var Folder $folder */
         foreach ($this->from->folders as $folder) {
