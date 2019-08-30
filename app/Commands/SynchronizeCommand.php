@@ -3,6 +3,9 @@
 namespace App\Commands;
 
 use App\Account;
+use App\Folder;
+use App\Mail;
+use App\Transfert;
 use Eliepse\Console\Component\AccountSelection;
 use Eliepse\Imap\Actions\CopyAccountFolderStructureAction;
 use Eliepse\Imap\Actions\CopyAccountMailsAction;
@@ -100,6 +103,21 @@ class SynchronizeCommand extends Command
         (new CopyAccountMailsAction($this->output, $this->from->id))($this->to->id);
 
         $this->timer->stop();
+
+        $baseQuery = Transfert::query()
+            ->whereIn('mail_id', Mail::query()
+                ->whereIn('folder_id', Folder::query()
+                    ->where('account_id', $this->from->id)
+                    ->select('id'))
+                ->select('id'));
+
+        $this->info("Here are some global stats about mails transfers:");
+        $this->table(["Succeed", "Failed"], [
+            [
+                $baseQuery->where('status', Transfert::STATUS_SUCCESS)->count(),
+                $baseQuery->where('status', Transfert::STATUS_FAILED)->count(),
+            ],
+        ]);
 
         $this->comment("Command executed in $this->timer");
 
