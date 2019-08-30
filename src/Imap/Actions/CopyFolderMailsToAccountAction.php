@@ -100,7 +100,7 @@ class CopyFolderMailsToAccountAction extends Action
 
             // Download the email
             try {
-                $body = imap_body($streamFrom, $mail->uid, FT_UID | FT_PEEK);
+                $body = imap_fetchbody($streamFrom, $mail->uid, null, FT_UID & FT_PEEK);
             } catch (ErrorException $e) {
                 Log::error($e->getMessage(), ['mail' => $mail->toArray()]);
                 $this->stats['failed']++;
@@ -114,7 +114,7 @@ class CopyFolderMailsToAccountAction extends Action
             if (imap_append($streamTo, Utils::uncleanMailboxName($to->name, $to->account), $body)) {
                 $this->stats['success']++;
                 $transfert->status = Transfert::STATUS_SUCCESS;
-                $transfert->message = '';
+                $transfert->message = null;
             } else {
                 Log::error(imap_last_error(), ['mail' => $mail->toArray()]);
                 $this->stats['failed']++;
