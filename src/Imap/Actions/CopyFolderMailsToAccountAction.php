@@ -94,13 +94,14 @@ class CopyFolderMailsToAccountAction extends Action
         /** @var Mail $mail */
         foreach ($mailToProcess as $mail) {
 
+            /** @var Transfert $transfert */
             $transfert = $mail->transferts->firstWhere('destination_account_id', $this->destin->id) ?? new Transfert();
             $transfert->mail()->associate($mail);
             $transfert->destination()->associate($this->destin);
 
             // Download the email
             try {
-                $body = imap_fetchbody($streamFrom, $mail->uid, null, FT_UID & FT_PEEK);
+                $body = imap_fetchbody($streamFrom, $mail->uid, null, FT_UID | FT_PEEK);
             } catch (ErrorException $e) {
                 Log::error($e->getMessage(), ['mail' => $mail->toArray()]);
                 $this->stats['failed']++;
