@@ -109,7 +109,8 @@ class SynchronizeCommand extends Command
                 ->whereIn('folder_id', Folder::query()
                     ->where('account_id', $this->from->id)
                     ->select('id'))
-                ->select('id'));
+                ->select('id'))
+            ->where('destination_account_id', $this->to->id);
 
         $this->info("Here are some global stats about mails transfers:");
         $this->table(["Succeed", "Failed"], [
