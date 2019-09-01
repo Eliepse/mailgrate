@@ -29,7 +29,6 @@ class CreateFoldersToAccountAction
 
             Log::debug("Attempt to create mailbox: {$mailbox->name}", [
                 'mailbox' => $mailbox->name,
-                'from' => $mailbox->account->id,
                 'to' => $account->id,
             ]);
 
@@ -37,7 +36,6 @@ class CreateFoldersToAccountAction
 
                 Log::info("Create mailbox: {$mailbox->name}", [
                     'mailbox' => $mailbox->name,
-                    'from' => $mailbox->account->id,
                     'to' => $account->id,
                 ]);
 
@@ -48,7 +46,6 @@ class CreateFoldersToAccountAction
                 Log::warning("Failed to create mailbox: {$mailbox->name}", [
                     'error' => imap_last_error(),
                     'mailbox' => $mailbox->name,
-                    'from' => $mailbox->account->id,
                     'to' => $account->id,
                 ]);
 
