@@ -8,6 +8,7 @@ use App\Account;
 use App\Folder;
 use ArrayAccess;
 use Eliepse\Imap\Utils;
+use Illuminate\Support\Facades\Log;
 
 class CreateFoldersToAccountAction
 {
@@ -26,9 +27,31 @@ class CreateFoldersToAccountAction
 
             $path = ($account->root ? $account->root . Utils::IMAP_DELIMITER : '') . $mailbox->nameWithoutRoot;
 
+            Log::debug("Attempt to create mailbox: {$mailbox->name}", [
+                'mailbox' => $mailbox->name,
+                'from' => $mailbox->account->id,
+                'to' => $account->id,
+            ]);
+
             if (imap_createmailbox($stream, Utils::uncleanMailboxName($path, $account))) {
+
+                Log::info("Create mailbox: {$mailbox->name}", [
+                    'mailbox' => $mailbox->name,
+                    'from' => $mailbox->account->id,
+                    'to' => $account->id,
+                ]);
+
                 $mailbox->account()->associate($account);
                 $mailbox->save();
+            } else {
+
+                Log::warning("Failed to create mailbox: {$mailbox->name}", [
+                    'error' => imap_last_error(),
+                    'mailbox' => $mailbox->name,
+                    'from' => $mailbox->account->id,
+                    'to' => $account->id,
+                ]);
+
             }
         }
 
