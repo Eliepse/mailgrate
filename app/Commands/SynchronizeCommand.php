@@ -99,6 +99,7 @@ class SynchronizeCommand extends Command
         $this->info("\nCopying folder structure...");
         (new CopyAccountFolderStructureAction($this->output, $this->from->id))($this->to->id);
 
+        $this->from->load(['folders.mails']);
         $this->to->load(['folders']);
 
         $this->info("\nCopying mails...");
