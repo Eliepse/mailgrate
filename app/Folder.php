@@ -41,7 +41,9 @@ final class Folder extends Model
         if (empty($this->account->root)) {
             return $this->name;
         } else {
-            return str_replace($this->account->root . Utils::IMAP_DELIMITER, '', $this->name);
+            $quotedPrefix = preg_quote($this->account->root . Utils::IMAP_DELIMITER, Utils::IMAP_DELIMITER);
+
+            return preg_replace("/^$quotedPrefix/", "", $this->name);
         }
     }
 
