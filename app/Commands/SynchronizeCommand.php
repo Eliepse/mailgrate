@@ -17,129 +17,129 @@ use LaravelZero\Framework\Commands\Command;
 
 class SynchronizeCommand extends Command
 {
-    use AccountSelection;
+	use AccountSelection;
 
-    /**
-     * The signature of the command.
-     *
-     * @var string
-     */
-    protected $signature = 'sync 
+	/**
+	 * The signature of the command.
+	 *
+	 * @var string
+	 */
+	protected $signature = 'sync 
                             {--no-update : only use database informations (include folders and mails)}';
 
-    /**
-     * The description of the command.
-     *
-     * @var string
-     */
-    protected $description = 'Interactive command to synchronize an accounts to another';
+	/**
+	 * The description of the command.
+	 *
+	 * @var string
+	 */
+	protected $description = 'Interactive command to synchronize an accounts to another';
 
-    /**
-     * @var Account
-     */
-    private $from;
+	/**
+	 * @var Account
+	 */
+	private $from;
 
-    /**
-     * @var Account
-     */
-    private $to;
+	/**
+	 * @var Account
+	 */
+	private $to;
 
-    /**
-     * @var Runtimer
-     */
-    private $timer;
-
-
-    public function __construct()
-    {
-        parent::__construct();
-
-        $this->timer = new Runtimer();
-    }
+	/**
+	 * @var Runtimer
+	 */
+	private $timer;
 
 
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     * @throws ErrorException
-     */
-    public function handle()
-    {
-        $accounts = Account::all();
+	public function __construct()
+	{
+		parent::__construct();
 
-        $this->question("Select the account that will be the source:");
-        $this->from = $this->selectAccountWithPassword($accounts);
+		$this->timer = new Runtimer();
+	}
 
-        $this->question("Select the account that will be the destination:");
-        $this->to = $this->selectAccountWithPassword($accounts->whereNotInStrict('id', $this->from->id));
 
-        $this->timer->start();
+	/**
+	 * Execute the console command.
+	 *
+	 * @return mixed
+	 * @throws ErrorException
+	 */
+	public function handle()
+	{
+		$accounts = Account::all();
 
-        if (!$this->option('no-update')) {
-            $this->comment("\nUpdating source account informations...");
-            (new UpdateAccountInformationsAction($this->output, $this->from->id))();
+		$this->question("Select the account that will be the source:");
+		$this->from = $this->selectAccountWithPassword($accounts);
 
-            $this->comment("Updating destination account informations...\n");
-            (new UpdateAccountInformationsAction($this->output, $this->to->id))(false);
-        } else {
-            $this->comment("Skipped accounts update.");
-        }
+		$this->question("Select the account that will be the destination:");
+		$this->to = $this->selectAccountWithPassword($accounts->whereNotInStrict('id', $this->from->id));
 
-        $this->from->load(['folders.mails']);
-        $this->to->load(['folders']);
+		$this->timer->start();
 
-        $this->table(
-            ['Source account', 'Destination account'],
-            [
-                [$this->from->folders->count() . ' folders', $this->to->folders->count() . ' folders'],
-                [$this->from->mailCount() . ' mails', '-'],
-            ]);
+		if (! $this->option('no-update')) {
+			$this->comment("\nUpdating source account informations...");
+			(new UpdateAccountInformationsAction($this->output, $this->from->id))();
 
-        $this->info("\nCopying folder structure...");
-        (new CopyAccountFolderStructureAction($this->output, $this->from->id))($this->to->id);
+			$this->comment("Updating destination account informations...\n");
+			(new UpdateAccountInformationsAction($this->output, $this->to->id))(false);
+		} else {
+			$this->comment("Skipped accounts update.");
+		}
 
-        $this->from->load(['folders.mails']);
-        $this->to->load(['folders']);
+		$this->from->load(['folders.mails']);
+		$this->to->load(['folders']);
 
-        $this->info("\nCopying mails...");
-        (new CopyAccountMailsAction($this->output, $this->from->id))($this->to->id);
+		$this->table(
+			['Source account', 'Destination account'],
+			[
+				[$this->from->folders->count() . ' folders', $this->to->folders->count() . ' folders'],
+				[$this->from->mailCount() . ' mails', '-'],
+			]);
 
-        $this->timer->stop();
+		$this->info("\nCopying folder structure...");
+		(new CopyAccountFolderStructureAction($this->output, $this->from->id))($this->to->id);
 
-        $baseQuery = Transfert::query()
-            ->whereIn('mail_id', Mail::query()
-                ->whereIn('folder_id', Folder::query()
-                    ->where('account_id', $this->from->id)
-                    ->select('id'))
-                ->select('id'))
-            ->where('destination_account_id', $this->to->id);
+		$this->from->load(['folders.mails']);
+		$this->to->load(['folders']);
 
-        $this->info("Here are some global stats about mails transfers:");
-        $this->table(["Succeed", "Failed"], [
-            [
-                $baseQuery->where('status', Transfert::STATUS_SUCCESS)->count(),
-                $baseQuery->where('status', Transfert::STATUS_FAILED)->count(),
-            ],
-        ]);
+		$this->info("\nCopying mails...");
+		(new CopyAccountMailsAction($this->output, $this->from->id))($this->to->id);
 
-        $this->comment("Command executed in $this->timer");
+		$this->timer->stop();
+
+		$baseQuery = Transfert::query()
+			->whereIn('mail_id', Mail::query()
+				->whereIn('folder_id', Folder::query()
+					->where('account_id', $this->from->id)
+					->select('id'))
+				->select('id'))
+			->where('destination_account_id', $this->to->id);
+
+		$this->info("Here are some global stats about mails transfers:");
+		$this->table(["Succeed", "Failed"], [
+			[
+				$baseQuery->where('status', Transfert::STATUS_SUCCESS)->count(),
+				$baseQuery->where('status', Transfert::STATUS_FAILED)->count(),
+			],
+		]);
+
+		$this->comment("Command executed in $this->timer");
 
 //        imap_flush_errors();
 
-        return;
-    }
+		return;
+	}
 
 
-    /**
-     * Define the command's schedule.
-     *
-     * @param Schedule $schedule
-     *
-     * @return void
-     */
-    public function schedule(Schedule $schedule): void
-    {
-        // $schedule->command(static::class)->everyMinute();
-    }
+	/**
+	 * Define the command's schedule.
+	 *
+	 * @param Schedule $schedule
+	 *
+	 * @return void
+	 */
+	public function schedule(Schedule $schedule): void
+	{
+		// $schedule->command(static::class)->everyMinute();
+	}
 }

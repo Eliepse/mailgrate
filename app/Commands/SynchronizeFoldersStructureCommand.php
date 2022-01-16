@@ -16,104 +16,104 @@ use LaravelZero\Framework\Commands\Command;
 
 class SynchronizeFoldersStructureCommand extends Command
 {
-    use AccountSelection;
+	use AccountSelection;
 
-    /**
-     * The signature of the command.
-     *
-     * @var string
-     */
-    protected $signature = 'sync:folders';
+	/**
+	 * The signature of the command.
+	 *
+	 * @var string
+	 */
+	protected $signature = 'sync:folders';
 
-    /**
-     * The description of the command.
-     *
-     * @var string
-     */
-    protected $description = 'Synchronize folders structure (tree)';
-
-
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     * @throws ErrorException
-     */
-    public function handle()
-    {
-        $accounts = Account::with(['folders'])->get();
-
-        $accountFrom = $this->selectAccountWithPassword($accounts);
-        $accountTo = $this->selectAccountWithPassword($accounts->whereNotIn('id', [$accountFrom->id]));
-
-        $mainTimer = new Runtimer(true);
-
-        $this->comment("Update folder structure in database");
-
-        $fromFolders = (new FetchAccountFoldersAction)($accountFrom);
-        (new UpdateFoldersToDatabaseAction($accountFrom))($fromFolders);
-
-        $toFolders = (new FetchAccountFoldersAction)($accountTo);
-        (new UpdateFoldersToDatabaseAction($accountTo))($toFolders);
-
-        $accountFrom->load(['folders']);
-        $accountTo->load(['folders']);
-
-        $this->comment("Finding differences...");
-
-        $foldersToAdd = $accountFrom->folders
-            ->diffUsing($accountTo->folders, function (Folder $a, Folder $b) {
-                return strcmp($a->nameWithoutRoot, $b->nameWithoutRoot);
-            })
-            // Create new folders to prevent original replacement in the database
-            ->transform(function (Folder $folder) use ($accountTo) {
-                return new Folder([
-                    'name' => $folder->name,
-                    'attributes' => $folder->attributes,
-                ]);
-            });
-
-        if ($foldersToAdd->count() > 0) {
-            $this->addFolders($accountTo, $foldersToAdd);
-        } else {
-            $this->info("All good! There is no folder to synchronize.");
-        }
-
-        $this->comment("Execution time: $mainTimer");
-
-        return;
-    }
+	/**
+	 * The description of the command.
+	 *
+	 * @var string
+	 */
+	protected $description = 'Synchronize folders structure (tree)';
 
 
-    /**
-     * Define the command's schedule.
-     *
-     * @param Schedule $schedule
-     *
-     * @return void
-     */
-    public function schedule(Schedule $schedule): void
-    {
-        // $schedule->command(static::class)->everyMinute();
-    }
+	/**
+	 * Execute the console command.
+	 *
+	 * @return mixed
+	 * @throws ErrorException
+	 */
+	public function handle()
+	{
+		$accounts = Account::with(['folders'])->get();
+
+		$accountFrom = $this->selectAccountWithPassword($accounts);
+		$accountTo = $this->selectAccountWithPassword($accounts->whereNotIn('id', [$accountFrom->id]));
+
+		$mainTimer = new Runtimer(true);
+
+		$this->comment("Update folder structure in database");
+
+		$fromFolders = (new FetchAccountFoldersAction)($accountFrom);
+		(new UpdateFoldersToDatabaseAction($accountFrom))($fromFolders);
+
+		$toFolders = (new FetchAccountFoldersAction)($accountTo);
+		(new UpdateFoldersToDatabaseAction($accountTo))($toFolders);
+
+		$accountFrom->load(['folders']);
+		$accountTo->load(['folders']);
+
+		$this->comment("Finding differences...");
+
+		$foldersToAdd = $accountFrom->folders
+			->diffUsing($accountTo->folders, function (Folder $a, Folder $b) {
+				return strcmp($a->nameWithoutRoot, $b->nameWithoutRoot);
+			})
+			// Create new folders to prevent original replacement in the database
+			->transform(function (Folder $folder) use ($accountTo) {
+				return new Folder([
+					'name' => $folder->name,
+					'attributes' => $folder->attributes,
+				]);
+			});
+
+		if ($foldersToAdd->count() > 0) {
+			$this->addFolders($accountTo, $foldersToAdd);
+		} else {
+			$this->info("All good! There is no folder to synchronize.");
+		}
+
+		$this->comment("Execution time: $mainTimer");
+
+		return;
+	}
 
 
-    public function addFolders(Account $account, Collection $folders)
-    {
-        $this->table(['Folders to add',], $folders->map(function (Folder $f) { return [$f->name]; }));
+	/**
+	 * Define the command's schedule.
+	 *
+	 * @param Schedule $schedule
+	 *
+	 * @return void
+	 */
+	public function schedule(Schedule $schedule): void
+	{
+		// $schedule->command(static::class)->everyMinute();
+	}
 
-        if ($this->confirm("Do you want to add those folders?")) {
-            (new CreateFoldersToAccountAction)($account, $folders);
 
-            $errors = $folders->filter(function (Folder $folder) {
-                return !$folder->exists;
-            });
+	public function addFolders(Account $account, Collection $folders)
+	{
+		$this->table(['Folders to add',], $folders->map(function (Folder $f) { return [$f->name]; }));
 
-            if ($errors->isEmpty()) {
-                $this->info("Folders created!");
-            } else {
-                $this->alert("{$errors->count()} folders could not be created.");
-            }
-        }
-    }
+		if ($this->confirm("Do you want to add those folders?")) {
+			(new CreateFoldersToAccountAction)($account, $folders);
+
+			$errors = $folders->filter(function (Folder $folder) {
+				return ! $folder->exists;
+			});
+
+			if ($errors->isEmpty()) {
+				$this->info("Folders created!");
+			} else {
+				$this->alert("{$errors->count()} folders could not be created.");
+			}
+		}
+	}
 }

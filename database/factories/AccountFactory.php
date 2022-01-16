@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Factory;
 use Illuminate\Support\Arr;
 
 $factory->define(Account::class, function (Faker $faker) {
-    return [
-        'host' => "{imap." . $faker->domainName . "/imap/ssl}",
-        'username' => $faker->userName,
-        'delimiter' => Arr::random(['/', '.']),
-        'root' => $faker->boolean ? 'INBOX' : null,
-    ];
+	return [
+		'host' => "{imap." . $faker->domainName . "/imap/ssl}",
+		'username' => $faker->userName,
+		'delimiter' => Arr::random(['/', '.']),
+		'root' => $faker->boolean ? 'INBOX' : null,
+	];
 });

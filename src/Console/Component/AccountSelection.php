@@ -11,100 +11,100 @@ use Illuminate\Database\Eloquent\Collection;
 
 trait AccountSelection
 {
-    /**
-     * @param Collection $accounts
-     *
-     * @return Account
-     */
-    protected function selectAccount(Collection $accounts): Account
-    {
-        $this->displayAccountsChoicesList($accounts);
+	/**
+	 * @param Collection $accounts
+	 *
+	 * @return Account
+	 */
+	protected function selectAccount(Collection $accounts): Account
+	{
+		$this->displayAccountsChoicesList($accounts);
 
-        return $this->askAccountChoice($accounts);
-    }
-
-
-    /**
-     * @param Collection $accounts
-     *
-     * @return Account
-     */
-    protected function selectAccountWithPassword(Collection $accounts): Account
-    {
-        $account = $this->selectAccount($accounts);
-
-        $this->askAccountPassword($account);
-
-        return $account;
-    }
+		return $this->askAccountChoice($accounts);
+	}
 
 
-    /**
-     * Display given account in a formated choice list
-     *
-     * @param Collection $accounts
-     */
-    protected function displayAccountsChoicesList(Collection $accounts)
-    {
-        $rows = $accounts->reduce(function (array $arr, Account $account) {
-            $arr[] = [
-                $account->id,
-                "{$account->host} - {$account->username}",
-            ];
+	/**
+	 * @param Collection $accounts
+	 *
+	 * @return Account
+	 */
+	protected function selectAccountWithPassword(Collection $accounts): Account
+	{
+		$account = $this->selectAccount($accounts);
 
-            return $arr;
-        }, []);
+		$this->askAccountPassword($account);
 
-        $this->table(["Choice", "Accounts"], $rows);
-    }
+		return $account;
+	}
 
 
-    /**
-     * @param Collection $accounts
-     *
-     * @return Account
-     */
-    protected function askAccountChoice(Collection $accounts): Account
-    {
-        do {
-            /** @var Account $account */
-            if (isset($account))
-                $this->error("Selected choice does not exists.");
+	/**
+	 * Display given account in a formated choice list
+	 *
+	 * @param Collection $accounts
+	 */
+	protected function displayAccountsChoicesList(Collection $accounts)
+	{
+		$rows = $accounts->reduce(function (array $arr, Account $account) {
+			$arr[] = [
+				$account->id,
+				"{$account->host} - {$account->username}",
+			];
 
-            $id = $this->ask("Select an account to update");
+			return $arr;
+		}, []);
 
-        } while (!$account = $accounts->firstWhere("id", intval($id)) ?? false);
-
-        return $account;
-    }
+		$this->table(["Choice", "Accounts"], $rows);
+	}
 
 
-    /**
-     * @param Account $account
-     *
-     * @return string
-     */
-    protected function askAccountPassword(Account $account): string
-    {
-        do {
-            $account->password = $this->secret("Please enter the password");
-            $this->comment("Testing the connection...");
+	/**
+	 * @param Collection $accounts
+	 *
+	 * @return Account
+	 */
+	protected function askAccountChoice(Collection $accounts): Account
+	{
+		do {
+			/** @var Account $account */
+			if (isset($account))
+				$this->error("Selected choice does not exists.");
 
-            try {
-                $stream = imap_open($account->host, $account->username, $account->password, OP_READONLY | OP_HALFOPEN, 2);
-            } catch (ErrorException $exception) {
-                $this->error("Failed to connect, try again.");
-            }
+			$id = $this->ask("Select an account to update");
 
-        } while (!isset($stream));
+		} while (! $account = $accounts->firstWhere("id", intval($id)) ?? false);
 
-        imap_close($stream);
-        imap_flush_errors();
+		return $account;
+	}
 
-        $this->info("Success!");
 
-        app(AccountPasswordManager::class)->add($account);
+	/**
+	 * @param Account $account
+	 *
+	 * @return string
+	 */
+	protected function askAccountPassword(Account $account): string
+	{
+		do {
+			$account->password = $this->secret("Please enter the password");
+			$this->comment("Testing the connection...");
 
-        return $account->password;
-    }
+			try {
+				$stream = imap_open($account->host, $account->username, $account->password, OP_READONLY | OP_HALFOPEN, 2);
+			} catch (ErrorException $exception) {
+				$this->error("Failed to connect, try again.");
+			}
+
+		} while (! isset($stream));
+
+		imap_close($stream);
+		imap_flush_errors();
+
+		$this->info("Success!");
+
+		app(AccountPasswordManager::class)->add($account);
+
+		return $account->password;
+	}
 }

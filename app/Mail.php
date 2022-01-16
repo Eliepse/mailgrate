@@ -27,37 +27,37 @@ use Illuminate\Support\Str;
  */
 final class Mail extends Model
 {
-    protected $table = 'mails';
-    protected $guarded = [];
+	protected $table = 'mails';
+	protected $guarded = [];
 
 
-    public function folder(): BelongsTo
-    {
-        return $this->belongsTo(Folder::class, 'folder_id', 'id');
-    }
+	public function folder(): BelongsTo
+	{
+		return $this->belongsTo(Folder::class, 'folder_id', 'id');
+	}
 
 
-    public function transferts(): HasMany
-    {
-        return $this->hasMany(Transfert::class, 'mail_id', 'id');
-    }
+	public function transferts(): HasMany
+	{
+		return $this->hasMany(Transfert::class, 'mail_id', 'id');
+	}
 
 
-    /**
-     * @param Account|int $account
-     *
-     * @return HasMany
-     */
-    public function transfertsToAccount($account): HasMany
-    {
-        return $this->transferts()
-            ->where('destination_account_id',
-                is_int($account) ? $account : $account->id);
-    }
+	/**
+	 * @param Account|int $account
+	 *
+	 * @return HasMany
+	 */
+	public function transfertsToAccount($account): HasMany
+	{
+		return $this->transferts()
+			->where('destination_account_id',
+				is_int($account) ? $account : $account->id);
+	}
 
 
-    public function setSubjectAttribute(string $subject)
-    {
-        $this->attributes['subject'] = Str::limit($subject, 200);
-    }
+	public function setSubjectAttribute(string $subject)
+	{
+		$this->attributes['subject'] = Str::limit($subject, 200);
+	}
 }

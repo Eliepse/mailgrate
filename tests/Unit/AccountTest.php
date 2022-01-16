@@ -8,19 +8,19 @@ use Tests\TestCase;
 
 class AccountTest extends TestCase
 {
-    use RefreshDatabase;
+	use RefreshDatabase;
 
 
-    public function testKeepPasswordThroughSerialization()
-    {
-        /** @var Account $account */
-        $account = factory(Account::class)->create();
-        $account->password = '1234';
+	public function testKeepPasswordThroughSerialization()
+	{
+		/** @var Account $account */
+		$account = factory(Account::class)->create();
+		$account->password = '1234';
 
-        $serialized = serialize($account);
-        $account = unserialize($serialized);
+		$serialized = serialize($account);
+		$account = unserialize($serialized);
 
-        $this->assertEquals(Account::class, get_class($account));
-        $this->assertEquals('1234', $account->password);
-    }
+		$this->assertEquals(Account::class, get_class($account));
+		$this->assertEquals('1234', $account->password);
+	}
 }

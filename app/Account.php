@@ -27,75 +27,75 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 final class Account extends Model
 {
-    protected $table = 'accounts';
-    protected $guarded = [];
+	protected $table = 'accounts';
+	protected $guarded = [];
 
-    /**
-     * For security purpose, the password
-     * is not stored in the database
-     *
-     * @var string|null
-     */
-    public $password;
-
-
-    public function folders(): HasMany
-    {
-        return $this->hasMany(Folder::class, 'account_id', 'id');
-    }
+	/**
+	 * For security purpose, the password
+	 * is not stored in the database
+	 *
+	 * @var string|null
+	 */
+	public $password;
 
 
-    public function transferts(): HasMany
-    {
-        return $this->hasMany(Transfert::class, 'destination_account_id', 'id');
-    }
+	public function folders(): HasMany
+	{
+		return $this->hasMany(Folder::class, 'account_id', 'id');
+	}
 
 
-    public function mailCount(): int
-    {
-        return $this->folders->reduce(function ($acc, Folder $folder) { return $acc + $folder->mails->count(); }, 0);
-    }
+	public function transferts(): HasMany
+	{
+		return $this->hasMany(Transfert::class, 'destination_account_id', 'id');
+	}
 
 
-    public function toArray()
-    {
-        return array_merge(
-            parent::toArray(),
-            ['password' => $this->password]
-        );
-    }
+	public function mailCount(): int
+	{
+		return $this->folders->reduce(function ($acc, Folder $folder) { return $acc + $folder->mails->count(); }, 0);
+	}
 
 
-    /**
-     * Open an imap connection
-     *
-     * @param Folder $folder
-     * @param int $options
-     *
-     * @return resource
-     */
-    public function connect(Folder $folder = null, int $options = OP_READONLY)
-    {
-        $host = $this->host;
-
-        $host .= Utils::imapUtf8ToUtf7(
-            Utils::toCustomDelimiter(
-                $this->root . Utils::IMAP_DELIMITER . ($folder ? $folder->name : ''),
-                $this->delimiter)
-        );
-
-        return imap_open(Utils::uncleanMailboxName($folder->name, $this), $this->username, $this->password, $options, 3);
-    }
+	public function toArray()
+	{
+		return array_merge(
+			parent::toArray(),
+			['password' => $this->password]
+		);
+	}
 
 
-    public function connectWithoutRoot(Folder $folder = null, int $options = OP_READONLY)
-    {
-        $host = $this->host;
+	/**
+	 * Open an imap connection
+	 *
+	 * @param Folder $folder
+	 * @param int $options
+	 *
+	 * @return resource
+	 */
+	public function connect(Folder $folder = null, int $options = OP_READONLY)
+	{
+		$host = $this->host;
 
-        if ($folder) {
-            $host .= Utils::imapUtf8ToUtf7(Utils::toCustomDelimiter($folder->name, $this->delimiter));
-        }
+		$host .= Utils::imapUtf8ToUtf7(
+			Utils::toCustomDelimiter(
+				$this->root . Utils::IMAP_DELIMITER . ($folder ? $folder->name : ''),
+				$this->delimiter)
+		);
 
-        return imap_open($host, $this->username, $this->password, $options, 3);
-    }
+		return imap_open(Utils::uncleanMailboxName($folder->name, $this), $this->username, $this->password, $options, 3);
+	}
+
+
+	public function connectWithoutRoot(Folder $folder = null, int $options = OP_READONLY)
+	{
+		$host = $this->host;
+
+		if ($folder) {
+			$host .= Utils::imapUtf8ToUtf7(Utils::toCustomDelimiter($folder->name, $this->delimiter));
+		}
+
+		return imap_open($host, $this->username, $this->password, $options, 3);
+	}
 }
