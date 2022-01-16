@@ -7,6 +7,7 @@ use App\Folder;
 use Eliepse\Console\Component\AccountSelection;
 use Illuminate\Console\Scheduling\Schedule;
 use LaravelZero\Framework\Commands\Command;
+use Symfony\Component\Console\Helper\TableSeparator;
 
 class ListAccountFoldersCommand extends Command
 {
@@ -47,9 +48,14 @@ class ListAccountFoldersCommand extends Command
             $this->warn("This account does not have folders registered. You might want to update it before?");
         }
 
-        $this->table(["Name"], $folders->map(function (Folder $folder) { return [$folder->name]; }));
+				$total = [
+					$this->account->folders->count() . " folders",
+					$this->account->folders->sum("mails_count") . " mails"
+				];
 
-        $this->info("{$folders->count()} folders registered.");
+        $this->table(["Name", "Mails"], $folders->map(function (Folder $folder) {
+					return [$folder->name, $folder->mails_count];
+				})->add(new TableSeparator([]))->add($total));
 
         return;
     }
