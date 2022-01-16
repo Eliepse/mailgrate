@@ -59,7 +59,7 @@ class SynchronizeFoldersStructureCommand extends Command
         $accountFrom->load(['folders']);
         $accountTo->load(['folders']);
 
-        $this->comment("Finding differrences...");
+        $this->comment("Finding differences...");
 
         $foldersToAdd = $accountFrom->folders
             ->diffUsing($accountTo->folders, function (Folder $a, Folder $b) {
@@ -102,7 +102,7 @@ class SynchronizeFoldersStructureCommand extends Command
     {
         $this->table(['Folders to add',], $folders->map(function (Folder $f) { return [$f->name]; }));
 
-        if ($this->ask("Do you want to add those folders?")) {
+        if ($this->confirm("Do you want to add those folders?")) {
             (new CreateFoldersToAccountAction)($account, $folders);
 
             $errors = $folders->filter(function (Folder $folder) {
