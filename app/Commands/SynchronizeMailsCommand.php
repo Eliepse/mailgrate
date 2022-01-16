@@ -53,13 +53,13 @@ class SynchronizeMailsCommand extends Command
             $destFolder = $this->to->folders->firstWhere('nameWithoutRoot', $folder->nameWithoutRoot);
 
             if (!$destFolder) {
-                $this->error("{$folder->nameWithoutRoot} does not have a valid destination.");
+                $this->error("$folder->nameWithoutRoot does not have a valid destination.");
                 continue;
             }
 
-            $stats = (new CopyFolderMailsToAccountAction($this->from, $this->to))($folder, $destFolder, $this);
+            $stats = (new CopyFolderMailsToAccountAction($this->output, $this->from, $this->to))($folder, $destFolder);
 
-            $this->info("{$folder->nameWithoutRoot}: \n\t{$stats['total']} mails ({$stats['success']} ok, {$stats['failed']} failed, {$stats['skipped']} skipped)");
+            $this->info("$folder->nameWithoutRoot: \n\t{$stats['total']} mails ({$stats['success']} ok, {$stats['failed']} failed, {$stats['skipped']} skipped)");
         };
 
         return;
