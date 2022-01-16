@@ -18,7 +18,6 @@ class CreateMailsTable extends Migration
 			$table->unsignedBigInteger('uid');
 			$table->string('subject');
 			$table->unsignedBigInteger('folder_id');
-			$table->timestamps();
 		});
 	}
 

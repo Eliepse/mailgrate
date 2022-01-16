@@ -29,6 +29,7 @@ final class Mail extends Model
 {
 	protected $table = 'mails';
 	protected $guarded = [];
+	public $timestamps = false;
 
 
 	public function folder(): BelongsTo
