@@ -71,9 +71,11 @@ class UpdateFolderMailsToDatabaseAction extends Action
         $this->stats['deleted'] = $deletedMails->count();
 
         $folder->mails()->whereIn('uid', $deletedMails->pluck('uid'))->delete();
-        $folder->mails()->insert($newMails->map(function (Mail $mail) use ($folder) {
-            return $mail->attributesToArray();
-        })->toArray());
+				$newMails->chunk(500)->each(function($chunk) use ($folder) {
+					$folder->mails()->insert($chunk->map(function (Mail $mail) use ($folder) {
+						return $mail->attributesToArray();
+					})->toArray());
+				});
 
         return $this->stats;
     }
